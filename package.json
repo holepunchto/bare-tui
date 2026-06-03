@@ -1,0 +1,61 @@
+{
+  "name": "@holepunchto/bare-tea",
+  "version": "0.0.1",
+  "description": "A little TUI framework for Bare, based on The Elm Architecture",
+  "main": "index.js",
+  "exports": {
+    "./package": "./package.json",
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    }
+  },
+  "files": [
+    "package.json",
+    "index.js",
+    "index.d.ts",
+    "ansi.js",
+    "commands.js",
+    "key.js",
+    "messages.js",
+    "mouse.js",
+    "program.js",
+    "renderer.js",
+    "style.js",
+    "components",
+    "docs",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "dependencies": {
+    "bare-ansi-escapes": "^2.2.3",
+    "bare-tty": "^5.1.0"
+  },
+  "optionalDependencies": {
+    "bare-fs": "^4.7.1",
+    "bare-path": "^3.0.0"
+  },
+  "devDependencies": {
+    "bare-stream": "^2.13.1",
+    "brittle": "^3.19.0",
+    "lunte": "^1.2.0",
+    "prettier": "^3.6.2",
+    "prettier-config-holepunch": "^2.0.0"
+  },
+  "scripts": {
+    "format": "prettier . --write",
+    "test": "brittle-bare test/index.js",
+    "lint": "prettier . --check && lunte"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/holepunchto/bare-tea.git"
+  },
+  "author": "Holepunch Inc",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/holepunchto/bare-tea/issues"
+  },
+  "homepage": "https://github.com/holepunchto/bare-tea"
+}

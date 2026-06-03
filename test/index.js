@@ -1,0 +1,21 @@
+const { test } = require('brittle')
+
+require('./tea')
+require('./commands')
+require('./components')
+require('./viewport')
+require('./list')
+require('./style')
+require('./mouse')
+require('./help')
+require('./progress')
+require('./paginator')
+require('./textarea')
+require('./table')
+require('./stopwatch')
+require('./timer')
+require('./filepicker')
+
+test('works', (t) => {
+  t.pass()
+})
