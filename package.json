@@ -1,7 +1,7 @@
 {
   "name": "@holepunchto/bare-tea",
   "version": "0.0.1",
-  "description": "A little TUI framework for Bare, based on The Elm Architecture",
+  "description": "A little TUI framework for Bare, based on bubbletea",
   "main": "index.js",
   "exports": {
     "./package": "./package.json",
