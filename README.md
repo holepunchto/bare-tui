@@ -8,7 +8,7 @@ functional, stateful way to build terminal apps that's pleasant for both simple
 and complex programs — and it runs anywhere Bare runs, with no Node.js
 dependencies.
 
-It's designed for AI. You should be able to point your agent to [CLAUDE.md] and instruct it to build out your UI. That's how the mock claude code example was built. 
+It's designed for AI. You should be able to point your agent to [CLAUDE.md](CLAUDE.md) and instruct it to build out your UI. That's how the mock claude code example was built. 
 
 ![Mock Claude Code](assets/mock-claude.gif)
 
@@ -25,8 +25,7 @@ equivalent), all built on Bare's native primitives (`bare-tty`,
 
 ## Tutorial
 
-This tutorial assumes you have Bare installed — it comes with
-[Pear](https://docs.pears.com). We'll build a simple counter.
+This tutorial assumes you have [Bare](https://bare.pears.com) installed. We'll build a simple counter.
 
 bare-tui programs are made of a **model** describing the application state, and
 three methods on that model:
