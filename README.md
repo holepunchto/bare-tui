@@ -11,6 +11,9 @@ It's designed for AI. You should be able to point your agent to [CLAUDE.md](CLAU
 
 ![Mock Claude Code](assets/mock-claude.gif)
 
+> [!NOTE]  
+> This an experimental library. A version 1.0.0 release will signal stability.
+
 bare-tui is shaped after Charm's wonderful
 [Bubble Tea](https://github.com/charmbracelet/bubbletea); if you know that, you
 already know this. It ships its own component set (the
