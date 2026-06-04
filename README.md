@@ -1,6 +1,5 @@
 # bare-tui
 
-![tui-bird](assets/tui-bird.png)
 
 A little TUI framework for [Bare](https://github.com/holepunchto/bare), based on
 [The Elm Architecture](https://guide.elm-lang.org/architecture/). It's a
@@ -277,6 +276,12 @@ Deeply indebted to [Charm](https://charm.sh) — bare-tui is a port of the ideas
 [Lip Gloss](https://github.com/charmbracelet/lipgloss) to the Bare runtime. Built
 on [Bare](https://github.com/holepunchto/bare) by
 [Holepunch](https://holepunch.to).
+
+## Logo
+
+![tui-bird](assets/tui-bird.png)
+
+A Tui bird of New Zealand
 
 ## License
 
