@@ -1,5 +1,5 @@
 {
-  "name": "@holepunchto/bare-tea",
+  "name": "@holepunchto/bare-tui",
   "version": "0.0.1",
   "description": "A little TUI framework for Bare, based on bubbletea",
   "main": "index.js",
@@ -50,12 +50,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/holepunchto/bare-tea.git"
+    "url": "https://github.com/holepunchto/bare-tui.git"
   },
   "author": "Holepunch Inc",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/holepunchto/bare-tea/issues"
+    "url": "https://github.com/holepunchto/bare-tui/issues"
   },
-  "homepage": "https://github.com/holepunchto/bare-tea"
+  "homepage": "https://github.com/holepunchto/bare-tui"
 }

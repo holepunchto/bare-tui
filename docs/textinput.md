@@ -9,7 +9,7 @@ and route to whichever has focus.
 ## Usage
 
 ```js
-const { textinput } = require('bare-tea')
+const { textinput } = require('bare-tui')
 
 class Form {
   constructor() {

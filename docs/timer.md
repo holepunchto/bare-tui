@@ -9,7 +9,7 @@ timeout message.
 ## Usage
 
 ```js
-const { timer } = require('bare-tea')
+const { timer } = require('bare-tui')
 
 class App {
   constructor() {

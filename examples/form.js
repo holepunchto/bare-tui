@@ -63,7 +63,7 @@ class Form {
 
     return [
       '',
-      `  ${this.spinner.view()}  bare-tea form demo`,
+      `  ${this.spinner.view()}  bare-tui form demo`,
       '',
       `  name   ${name.view()}`,
       `  email  ${email.view()}`,

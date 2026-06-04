@@ -1,6 +1,6 @@
-# Building apps with bare-tea
+# Building apps with bare-tui
 
-Guidance for an AI (or human) building a terminal app **on top of** bare-tea.
+Guidance for an AI (or human) building a terminal app **on top of** bare-tui.
 This is not API reference — the [README](README.md) and [`docs/`](docs) cover
 that, and each shipped component's source is short and meant to be read. This
 file captures the patterns and traps that show up once an app grows past a
@@ -9,7 +9,7 @@ exercises most of them in one place; reach for it as a worked reference.
 
 ## The shape of every app
 
-bare-tea is [The Elm Architecture](https://guide.elm-lang.org/architecture/):
+bare-tui is [The Elm Architecture](https://guide.elm-lang.org/architecture/):
 
 - **model** — a class holding all state. Mutating `this` is idiomatic.
 - **`init() -> Cmd | null`** — the first command to run (timers, IO, a spinner).
@@ -126,7 +126,7 @@ Concrete consequences for a larger app:
 
 ## Text, width, and ANSI (measure visible cells, never `.length`)
 
-Once you add color and borders, naive string math breaks. bare-tea's `style`
+Once you add color and borders, naive string math breaks. bare-tui's `style`
 measures **visible width** — it ignores ANSI escapes and counts wide glyphs
 (CJK, most emoji) as two cells.
 
@@ -166,7 +166,7 @@ For any app with a scrolling transcript/log plus a live input:
 
 ## Testing headlessly (do this — it's a first-class path)
 
-bare-tea runs with no real terminal. Drive a `Program` with injected streams and
+bare-tui runs with no real terminal. Drive a `Program` with injected streams and
 assert on what it renders:
 
 ```js

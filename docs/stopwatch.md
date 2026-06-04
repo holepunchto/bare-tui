@@ -9,7 +9,7 @@ re-issues the next.
 ## Usage
 
 ```js
-const { stopwatch } = require('bare-tea')
+const { stopwatch } = require('bare-tui')
 
 class App {
   constructor() {

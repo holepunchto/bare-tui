@@ -9,7 +9,7 @@ Bindings without a `help` entry are skipped, so internal keys stay hidden.
 ## Usage
 
 ```js
-const { help, list } = require('bare-tea')
+const { help, list } = require('bare-tui')
 
 const h = help.create()
 

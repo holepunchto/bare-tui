@@ -9,7 +9,7 @@ so you can carve the visible page out of your items.
 ## Usage
 
 ```js
-const { paginator } = require('bare-tea')
+const { paginator } = require('bare-tui')
 
 const p = paginator.create({ perPage: 10, total: items.length, type: 'dots' })
 

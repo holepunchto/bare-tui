@@ -118,7 +118,7 @@ class Dashboard {
       .render(this.detail.view())
 
     const body = style.joinHorizontal(style.position.top, listBox, ' ', detailBox)
-    const title = style().bold(true).foreground('magenta').render('  bare-tea dashboard')
+    const title = style().bold(true).foreground('magenta').render('  bare-tui dashboard')
     const footer = style().faint(true).render('  ↑/↓ select · pgup/pgdn scroll · / filter · q quit')
 
     return style.joinVertical(style.position.left, title, '', body, '', footer)

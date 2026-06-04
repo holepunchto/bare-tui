@@ -9,7 +9,7 @@ content), so surrounding layout stays stable.
 ## Usage
 
 ```js
-const { viewport } = require('bare-tea')
+const { viewport } = require('bare-tui')
 
 const vp = viewport.create({ width: 40, height: 10 })
 vp.setContent(longText)

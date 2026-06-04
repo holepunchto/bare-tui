@@ -9,7 +9,7 @@ never depends on `bare-fs`, and your file UIs are trivially testable.
 ## Usage
 
 ```js
-const { filepicker } = require('bare-tea')
+const { filepicker } = require('bare-tui')
 
 class App {
   constructor() {

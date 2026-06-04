@@ -8,7 +8,7 @@ command each frame.
 ## Usage
 
 ```js
-const { spinner } = require('bare-tea')
+const { spinner } = require('bare-tui')
 
 class App {
   constructor() {

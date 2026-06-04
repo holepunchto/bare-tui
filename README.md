@@ -1,4 +1,4 @@
-# bare-tea
+# bare-tui
 
 A little TUI framework for [Bare](https://github.com/holepunchto/bare), based on
 [The Elm Architecture](https://guide.elm-lang.org/architecture/). It's a
@@ -6,7 +6,7 @@ functional, stateful way to build terminal apps that's pleasant for both simple
 and complex programs — and it runs anywhere Bare runs, with no Node.js
 dependencies.
 
-bare-tea is shaped after Charm's wonderful
+bare-tui is shaped after Charm's wonderful
 [Bubble Tea](https://github.com/charmbracelet/bubbletea); if you know that, you
 already know this. It ships its own component set (the
 [Bubbles](https://github.com/charmbracelet/bubbles) equivalent) and a
@@ -14,7 +14,7 @@ styling/layout helper (the [Lip Gloss](https://github.com/charmbracelet/lipgloss
 equivalent), all built on Bare's native primitives (`bare-tty`,
 `bare-ansi-escapes`).
 
-> The snippets below import `require('bare-tea')`. Inside this repo's own
+> The snippets below import `require('bare-tui')`. Inside this repo's own
 > `examples/` and `test/`, that's a relative `require('..')`.
 
 ## Tutorial
@@ -22,7 +22,7 @@ equivalent), all built on Bare's native primitives (`bare-tty`,
 This tutorial assumes you have Bare installed — it comes with
 [Pear](https://docs.pears.com). We'll build a simple counter.
 
-bare-tea programs are made of a **model** describing the application state, and
+bare-tui programs are made of a **model** describing the application state, and
 three methods on that model:
 
 - **`init`** — a function that returns an initial _command_ (or `null`).
@@ -35,7 +35,7 @@ three methods on that model:
 Start with a model — anything that holds your app's state. A class is idiomatic:
 
 ```js
-const { Program, quit, key } = require('bare-tea')
+const { Program, quit, key } = require('bare-tui')
 
 class Counter {
   constructor() {
@@ -75,7 +75,7 @@ Mutating `this` and returning `[this, cmd]` is the idiomatic style here.
 
 ### The View Method
 
-`view` renders the current model to a string. bare-tea draws it for you and only
+`view` renders the current model to a string. bare-tui draws it for you and only
 repaints the lines that changed.
 
 ```js
@@ -87,7 +87,7 @@ view() {
 ### All Together Now
 
 ```js
-const { Program, quit, key } = require('bare-tea')
+const { Program, quit, key } = require('bare-tui')
 
 class Counter {
   constructor() {
@@ -123,7 +123,7 @@ into `update`. This is how you do anything asynchronous — timers, file or netw
 I/O, talking to a worker — without blocking the UI.
 
 ```js
-const { quit, batch, sequence, tick, every } = require('bare-tea')
+const { quit, batch, sequence, tick, every } = require('bare-tui')
 
 quit // a Cmd that quits the program
 tick(1000, () => ({ type: 'tick' })) // fire a Msg after 1s
@@ -211,7 +211,7 @@ equivalent). All measurement is ANSI- and wide-character-aware, so styled text
 composes correctly.
 
 ```js
-const { style } = require('bare-tea')
+const { style } = require('bare-tui')
 
 style()
   .bold(true)
@@ -231,7 +231,7 @@ bordered box tracks the screen edge instead of shrinking to its content).
 
 ## Testing
 
-bare-tea is built to be tested headlessly — no real terminal, no real I/O.
+bare-tui is built to be tested headlessly — no real terminal, no real I/O.
 
 - **Drive a Program** with injected streams: pass `{ input, output, isTTY: true }`
   (a `bare-stream` `PassThrough` and a capturing `Writable`), write key bytes to
@@ -266,7 +266,7 @@ the closest one. The `tea-tui` skill in this repo walks through it in detail.
 
 ## Acknowledgments
 
-Deeply indebted to [Charm](https://charm.sh) — bare-tea is a port of the ideas in
+Deeply indebted to [Charm](https://charm.sh) — bare-tui is a port of the ideas in
 [Bubble Tea](https://github.com/charmbracelet/bubbletea),
 [Bubbles](https://github.com/charmbracelet/bubbles), and
 [Lip Gloss](https://github.com/charmbracelet/lipgloss) to the Bare runtime. Built

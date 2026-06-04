@@ -9,7 +9,7 @@ body scrolls in a fixed-height window.
 ## Usage
 
 ```js
-const { table } = require('bare-tea')
+const { table } = require('bare-tui')
 
 const t = table.create({
   columns: [

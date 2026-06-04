@@ -8,7 +8,7 @@ the cursor; filtering is delegated to an embedded [textinput](textinput.md).
 ## Usage
 
 ```js
-const { list } = require('bare-tea')
+const { list } = require('bare-tui')
 
 const l = list.create({
   items: ['apple', 'banana', 'cherry'],

@@ -9,7 +9,7 @@ wrapped text). Input-driven and focus-gated, like [textinput](textinput.md).
 ## Usage
 
 ```js
-const { textarea } = require('bare-tea')
+const { textarea } = require('bare-tui')
 
 const ta = textarea.create({ width: 60, height: 10, placeholder: 'Type…' }).focus()
 

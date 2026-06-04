@@ -12,7 +12,7 @@ the same field never pops a menu.
 ## Usage
 
 ```js
-const { autocomplete, key } = require('bare-tea')
+const { autocomplete, key } = require('bare-tui')
 
 class Prompt {
   constructor() {

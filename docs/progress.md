@@ -9,7 +9,7 @@ model (a tick, a download callback, the OTA updater).
 ## Usage
 
 ```js
-const { progress } = require('bare-tea')
+const { progress } = require('bare-tui')
 
 const bar = progress.create({ width: 40, gradient: ['#5A56E0', '#EE6FF8'] })
 

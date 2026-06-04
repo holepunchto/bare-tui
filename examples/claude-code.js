@@ -1,5 +1,5 @@
 // A fake "agentic coding" TUI — a playful, backend-free homage to Claude Code,
-// built to exercise most of bare-tea at once.
+// built to exercise most of bare-tui at once.
 //
 //   bare examples/claude-code.js
 //
@@ -209,7 +209,7 @@ function featureScenario() {
         'Read',
         'README.md',
         '210 lines',
-        ['# bare-tea', 'A little TUI framework for Bare…'],
+        ['# bare-tui', 'A little TUI framework for Bare…'],
         600
       ),
       step(
@@ -241,7 +241,7 @@ function featureScenario() {
       'Use it like the rest:',
       '',
       '```js',
-      "const { badge } = require('bare-tea')",
+      "const { badge } = require('bare-tui')",
       "badge.create({ label: 'NEW', color: 'magenta' }).view()",
       '```'
     ].join('\n')
@@ -271,7 +271,7 @@ function exploreScenario(prompt) {
     answer: [
       `Here's the lay of the land for **"${prompt.trim() || 'the codebase'}"**.`,
       '',
-      'bare-tea is The Elm Architecture on Bare: a model exposes `init`/`update`/',
+      'bare-tui is The Elm Architecture on Bare: a model exposes `init`/`update`/',
       '`view`, and the `Program` turns keystrokes and timers into messages.',
       '',
       '- **`program.js`** — the runtime / event loop',
@@ -640,7 +640,7 @@ class App {
       style()
         .bold(true)
         .foreground(this.theme.accent)
-        .render('Welcome to the bare-tea agent demo.'),
+        .render('Welcome to the bare-tui agent demo.'),
       '',
       'This is a toy — no AI, no network, no disk. It just shows the framework off:',
       `${style().foreground(this.theme.accent2).render('•')} type a request (try "add a logout button" or "fix the crash")`,
@@ -769,13 +769,13 @@ class App {
 
   _header() {
     const logo = gradient('✻ claude-code', this.theme.from, this.theme.to)
-    const tag = style().faint(true).render('· bare-tea edition')
+    const tag = style().faint(true).render('· bare-tui edition')
     const meta =
       style().faint(true).render('model ') +
       style().foreground(this.theme.accent).render(this.model) +
       style().faint(true).render('   theme ') +
       style().foreground(this.theme.accent2).render(this.theme.name) +
-      style().faint(true).render('   ~/holepunch/bare-tea')
+      style().faint(true).render('   ~/holepunch/bare-tui')
     const inner = style.joinVertical(style.position.left, `${logo}  ${tag}`, meta)
     const box = style()
       .width(this.width - 4)

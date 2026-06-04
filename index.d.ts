@@ -1,1 +1,1 @@
-declare module '@holepunchto/bare-tea'
+declare module '@holepunchto/bare-tui'
