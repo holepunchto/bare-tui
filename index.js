@@ -26,6 +26,7 @@ const ansi = require('./ansi')
 const { style } = require('./style')
 const spinner = require('./components/spinner')
 const textinput = require('./components/textinput')
+const autocomplete = require('./components/autocomplete')
 const textarea = require('./components/textarea')
 const viewport = require('./components/viewport')
 const list = require('./components/list')
@@ -48,6 +49,7 @@ module.exports = {
   // Components — each a composable { init?, update, view } model.
   spinner, // spinner.create({ frames, fps })
   textinput, // textinput.create({ placeholder, prompt, charLimit, echoMode })
+  autocomplete, // autocomplete.create({ prompt, placeholder, suggestions, trigger }) — input + suggestion menu
   textarea, // textarea.create({ width, height, placeholder, charLimit }) — multi-line
   viewport, // viewport.create({ width, height }) — scrollable window
   list, // list.create({ items, height, width, title }) — selectable + filterable

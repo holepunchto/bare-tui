@@ -174,20 +174,21 @@ new Program(model, { mouse: true }) //  true | 'drag' | 'all'
 Ready-made, composable pieces — each is a model (`update`/`view`) you embed in
 your own. See each doc for options, methods, messages, and keybindings.
 
-| Component                        | Description                             |
-| -------------------------------- | --------------------------------------- |
-| [spinner](docs/spinner.md)       | Animated loading indicator              |
-| [textinput](docs/textinput.md)   | Single-line text field                  |
-| [textarea](docs/textarea.md)     | Multi-line text editor                  |
-| [list](docs/list.md)             | Selectable, filterable list             |
-| [table](docs/table.md)           | Columns with selectable, scrolling rows |
-| [viewport](docs/viewport.md)     | Scrollable window over long content     |
-| [paginator](docs/paginator.md)   | Page state + indicator                  |
-| [progress](docs/progress.md)     | Progress bar                            |
-| [help](docs/help.md)             | Keybinding hints from `key.binding`s    |
-| [stopwatch](docs/stopwatch.md)   | Counts elapsed time up                  |
-| [timer](docs/timer.md)           | Counts a duration down                  |
-| [filepicker](docs/filepicker.md) | Browse the filesystem and pick a file   |
+| Component                            | Description                             |
+| ------------------------------------ | --------------------------------------- |
+| [spinner](docs/spinner.md)           | Animated loading indicator              |
+| [textinput](docs/textinput.md)       | Single-line text field                  |
+| [autocomplete](docs/autocomplete.md) | Text field with a suggestion menu       |
+| [textarea](docs/textarea.md)         | Multi-line text editor                  |
+| [list](docs/list.md)                 | Selectable, filterable list             |
+| [table](docs/table.md)               | Columns with selectable, scrolling rows |
+| [viewport](docs/viewport.md)         | Scrollable window over long content     |
+| [paginator](docs/paginator.md)       | Page state + indicator                  |
+| [progress](docs/progress.md)         | Progress bar                            |
+| [help](docs/help.md)                 | Keybinding hints from `key.binding`s    |
+| [stopwatch](docs/stopwatch.md)       | Counts elapsed time up                  |
+| [timer](docs/timer.md)               | Counts a duration down                  |
+| [filepicker](docs/filepicker.md)     | Browse the filesystem and pick a file   |
 
 To embed one, hold it as a field, route messages to it, and thread its command
 back up:
@@ -247,7 +248,7 @@ bare-tea is built to be tested headlessly — no real terminal, no real I/O.
 Runnable, one per concept, in [`examples/`](examples):
 
 `counter` · `form` · `list` · `table` · `dashboard` · `pager` · `progress` ·
-`paginator` · `mouse` · `textarea` · `timer` · `filepicker`
+`paginator` · `mouse` · `textarea` · `timer` · `filepicker` · `claude-code`
 
 ```sh
 bare examples/dashboard.js
