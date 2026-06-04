@@ -1,13 +1,12 @@
 # bare-tui
 
-
 A little TUI framework for [Bare](https://github.com/holepunchto/bare), based on
 [The Elm Architecture](https://guide.elm-lang.org/architecture/). It's a
 functional, stateful way to build terminal apps that's pleasant for both simple
 and complex programs — and it runs anywhere Bare runs, with no Node.js
 dependencies.
 
-It's designed for AI. You should be able to point your agent to [CLAUDE.md](CLAUDE.md) and instruct it to build out your UI. That's how the mock claude code example was built. 
+It's designed for AI. You should be able to point your agent to [CLAUDE.md](CLAUDE.md) and instruct it to build out your UI. That's how the mock claude code example was built.
 
 ![Mock Claude Code](assets/mock-claude.gif)
 
