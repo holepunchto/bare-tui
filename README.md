@@ -1,10 +1,6 @@
 # bare-tui
 
-A little TUI framework for [Bare](https://github.com/holepunchto/bare), based on
-[The Elm Architecture](https://guide.elm-lang.org/architecture/). It's a
-functional, stateful way to build terminal apps that's pleasant for both simple
-and complex programs — and it runs anywhere Bare runs, with no Node.js
-dependencies.
+A little TUI framework for [Bare](https://github.com/holepunchto/bare), based on [The Elm Architecture](https://guide.elm-lang.org/architecture/). It's a functional, stateful way to build terminal apps that's pleasant for both simple and complex programs — and it runs anywhere Bare runs, with no Node.js dependencies.
 
 It's designed for AI. You should be able to point your agent to [CLAUDE.md](CLAUDE.md) and instruct it to build out your UI. That's how the mock claude code example was built.
 
@@ -13,23 +9,15 @@ It's designed for AI. You should be able to point your agent to [CLAUDE.md](CLAU
 > [!NOTE]  
 > This an experimental library. A version 1.0.0 release will signal stability.
 
-bare-tui is shaped after Charm's wonderful
-[Bubble Tea](https://github.com/charmbracelet/bubbletea); if you know that, you
-already know this. It ships its own component set (the
-[Bubbles](https://github.com/charmbracelet/bubbles) equivalent) and a
-styling/layout helper (the [Lip Gloss](https://github.com/charmbracelet/lipgloss)
-equivalent), all built on Bare's native primitives (`bare-tty`,
-`bare-ansi-escapes`).
+bare-tui is shaped after Charm's wonderful [Bubble Tea](https://github.com/charmbracelet/bubbletea); if you know that, you already know this. It ships its own component set (the [Bubbles](https://github.com/charmbracelet/bubbles) equivalent) and a styling/layout helper (the [Lip Gloss](https://github.com/charmbracelet/lipgloss) equivalent), all built on Bare's native primitives (`bare-tty`, `bare-ansi-escapes`).
 
-> The snippets below import `require('bare-tui')`. Inside this repo's own
-> `examples/` and `test/`, that's a relative `require('..')`.
+> The snippets below import `require('bare-tui')`. Inside this repo's own `examples/` and `test/`, that's a relative `require('..')`.
 
 ## Tutorial
 
 This tutorial assumes you have [Bare](https://bare.pears.com) installed. We'll build a simple counter.
 
-bare-tui programs are made of a **model** describing the application state, and
-three methods on that model:
+bare-tui programs are made of a **model** describing the application state, and three methods on that model:
 
 - **`init`** — a function that returns an initial _command_ (or `null`).
 - **`update`** — a function that handles incoming _messages_ and updates the
@@ -52,8 +40,7 @@ class Counter {
 
 ### Initialization
 
-`init` returns the first **command** to run, or `null` for none. Commands are
-how you kick off work (timers, I/O); more on them below.
+`init` returns the first **command** to run, or `null` for none. Commands are how you kick off work (timers, I/O); more on them below.
 
 ```js
 init() {
@@ -63,9 +50,7 @@ init() {
 
 ### The Update Method
 
-`update` is called when a **message** arrives. A message is any tagged value —
-a keypress, a window resize, the result of a command. It returns a
-`[model, command]` pair (returning a bare model means "no command").
+`update` is called when a **message** arrives. A message is any tagged value — a keypress, a window resize, the result of a command. It returns a `[model, command]` pair (returning a bare model means "no command").
 
 ```js
 update(msg) {
@@ -81,8 +66,7 @@ Mutating `this` and returning `[this, cmd]` is the idiomatic style here.
 
 ### The View Method
 
-`view` renders the current model to a string. bare-tui draws it for you and only
-repaints the lines that changed.
+`view` renders the current model to a string. bare-tui draws it for you and only repaints the lines that changed.
 
 ```js
 view() {
@@ -117,16 +101,11 @@ class Counter {
 new Program(new Counter()).run()
 ```
 
-Run it with `bare counter.js`. The `Program` puts the terminal into raw mode,
-enters the alternate screen, decodes input into messages, and — importantly —
-restores the terminal on exit, even if your code throws.
+Run it with `bare counter.js`. The `Program` puts the terminal into raw mode, enters the alternate screen, decodes input into messages, and — importantly — restores the terminal on exit, even if your code throws.
 
 ## Commands
 
-A **command** (`Cmd`) is a function `() => Msg | Promise<Msg> | null`. The
-runtime runs it _off_ the update path and feeds whatever message it returns back
-into `update`. This is how you do anything asynchronous — timers, file or network
-I/O, talking to a worker — without blocking the UI.
+A **command** (`Cmd`) is a function `() => Msg | Promise<Msg> | null`. The runtime runs it _off_ the update path and feeds whatever message it returns back into `update`. This is how you do anything asynchronous — timers, file or network I/O, talking to a worker — without blocking the UI.
 
 ```js
 const { quit, batch, sequence, tick, every } = require('bare-tui')
@@ -151,16 +130,14 @@ Return commands from `init` or `update`; the result comes back as a message.
 
 ## Key & mouse input
 
-Keys arrive as `{ type: 'key' }` messages (a `KeyMsg`). Match them with
-`key.matches`, which is null- and type-safe:
+Keys arrive as `{ type: 'key' }` messages (a `KeyMsg`). Match them with `key.matches`, which is null- and type-safe:
 
 ```js
 if (key.matches(msg, 'enter')) ...
 if (key.matches(msg, 'ctrl+c', 'q')) ...
 ```
 
-Define reusable, self-documenting bindings with `key.binding` — the
-[help](docs/help.md) component renders them automatically:
+Define reusable, self-documenting bindings with `key.binding` — the [help](docs/help.md) component renders them automatically:
 
 ```js
 const keys = {
@@ -168,8 +145,7 @@ const keys = {
 }
 ```
 
-Enable the mouse with a Program option; clicks/scroll/drag arrive as
-`{ type: 'mouse', action, button, x, y }`:
+Enable the mouse with a Program option; clicks/scroll/drag arrive as `{ type: 'mouse', action, button, x, y }`:
 
 ```js
 new Program(model, { mouse: true }) //  true | 'drag' | 'all'
@@ -177,8 +153,7 @@ new Program(model, { mouse: true }) //  true | 'drag' | 'all'
 
 ## Components
 
-Ready-made, composable pieces — each is a model (`update`/`view`) you embed in
-your own. See each doc for options, methods, messages, and keybindings.
+Ready-made, composable pieces — each is a model (`update`/`view`) you embed in your own. See each doc for options, methods, messages, and keybindings.
 
 | Component                            | Description                             |
 | ------------------------------------ | --------------------------------------- |
@@ -196,8 +171,7 @@ your own. See each doc for options, methods, messages, and keybindings.
 | [timer](docs/timer.md)               | Counts a duration down                  |
 | [filepicker](docs/filepicker.md)     | Browse the filesystem and pick a file   |
 
-To embed one, hold it as a field, route messages to it, and thread its command
-back up:
+To embed one, hold it as a field, route messages to it, and thread its command back up:
 
 ```js
 update(msg) {
@@ -212,9 +186,7 @@ update(msg) {
 
 ## Styling & layout
 
-`style` is a small, chainable, immutable styling and layout helper (a Lip Gloss
-equivalent). All measurement is ANSI- and wide-character-aware, so styled text
-composes correctly.
+`style` is a small, chainable, immutable styling and layout helper (a Lip Gloss equivalent). All measurement is ANSI- and wide-character-aware, so styled text composes correctly.
 
 ```js
 const { style } = require('bare-tui')
@@ -232,22 +204,15 @@ style.joinHorizontal(style.position.top, left, '  ', right)
 style.joinVertical(style.position.left, header, body, footer)
 ```
 
-Set `.width(n)` to pin a block to a fixed width (short/blank lines pad out, so a
-bordered box tracks the screen edge instead of shrinking to its content).
+Set `.width(n)` to pin a block to a fixed width (short/blank lines pad out, so a bordered box tracks the screen edge instead of shrinking to its content).
 
 ## Testing
 
 bare-tui is built to be tested headlessly — no real terminal, no real I/O.
 
-- **Drive a Program** with injected streams: pass `{ input, output, isTTY: true }`
-  (a `bare-stream` `PassThrough` and a capturing `Writable`), write key bytes to
-  `input`, `await program.run()`, and assert on the captured output. Use
-  `{ fps: 0 }` to render synchronously per update for deterministic frames.
-- **Mock dependencies**: components that touch the outside world take their deps
-  by injection. For example `filepicker.mock(tree)` returns an in-memory
-  `{ fs, path }` so you can test a file browser with zero disk access.
-- **Unit-test components** by calling `update(msg)` and asserting on state or
-  `view()`. `style.stripAnsi(view)` gives you the visible text.
+- **Drive a Program** with injected streams: pass `{ input, output, isTTY: true }` (a `bare-stream` `PassThrough` and a capturing `Writable`), write key bytes to `input`, `await program.run()`, and assert on the captured output. Use `{ fps: 0 }` to render synchronously per update for deterministic frames.
+- **Mock dependencies**: components that touch the outside world take their deps by injection. For example `filepicker.mock(tree)` returns an in-memory `{ fs, path }` so you can test a file browser with zero disk access.
+- **Unit-test components** by calling `update(msg)` and asserting on state or `view()`. `style.stripAnsi(view)` gives you the visible text.
 
 ## Examples
 
@@ -262,22 +227,11 @@ bare examples/dashboard.js
 
 ## Building your own component
 
-Components are just models, so you can build your own and they'll compose like
-the built-ins. Keep to the conventions the built-ins follow — a `create()`
-factory, `update → [model, cmd]` / `view → string`, ignore unrelated messages,
-gate input on a `focused` flag, define keymaps with `key.binding`, stay
-style-agnostic, and do animation/I/O through commands (with an injectable,
-mockable dependency). The shipped components are short and meant to be read; copy
-the closest one. The `tea-tui` skill in this repo walks through it in detail.
+Components are just models, so you can build your own and they'll compose like the built-ins. Keep to the conventions the built-ins follow — a `create()` factory, `update → [model, cmd]` / `view → string`, ignore unrelated messages, gate input on a `focused` flag, define keymaps with `key.binding`, stay style-agnostic, and do animation/I/O through commands (with an injectable, mockable dependency). The shipped components are short and meant to be read; copy the closest one. The `tea-tui` skill in this repo walks through it in detail.
 
 ## Acknowledgments
 
-Deeply indebted to [Charm](https://charm.sh) — bare-tui is a port of the ideas in
-[Bubble Tea](https://github.com/charmbracelet/bubbletea),
-[Bubbles](https://github.com/charmbracelet/bubbles), and
-[Lip Gloss](https://github.com/charmbracelet/lipgloss) to the Bare runtime. Built
-on [Bare](https://github.com/holepunchto/bare) by
-[Holepunch](https://holepunch.to).
+Deeply indebted to [Charm](https://charm.sh) — bare-tui is a port of the ideas in [Bubble Tea](https://github.com/charmbracelet/bubbletea), [Bubbles](https://github.com/charmbracelet/bubbles), and [Lip Gloss](https://github.com/charmbracelet/lipgloss) to the Bare runtime. Built on [Bare](https://github.com/holepunchto/bare) by [Holepunch](https://holepunch.to).
 
 ## Logo
 

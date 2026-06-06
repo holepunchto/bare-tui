@@ -44,15 +44,15 @@
     "prettier-config-holepunch": "^2.0.0"
   },
   "scripts": {
-    "format": "prettier . --write",
-    "test": "brittle-bare test/index.js",
-    "lint": "prettier . --check && lunte"
+    "format": "prettier --write . && lunte --fix",
+    "lint": "prettier --check . && lunte",
+    "test": "brittle-bare --coverage test/index.js"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/holepunchto/bare-tui.git"
   },
-  "author": "Holepunch Inc",
+  "author": "Holepunch",
   "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/holepunchto/bare-tui/issues"

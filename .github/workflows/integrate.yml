@@ -1,9 +1,13 @@
 name: Integrate
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
+permissions:
+  contents: read
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -17,6 +21,10 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
+          - os: macos-latest
+            platform: darwin
+          - os: windows-latest
+            platform: win32
     runs-on: ${{ matrix.os }}
     name: Test / ${{ matrix.platform }}
     steps:
