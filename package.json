@@ -32,11 +32,9 @@
     "bare-ansi-escapes": "^2.2.3",
     "bare-tty": "^5.1.0"
   },
-  "optionalDependencies": {
-    "bare-fs": "^4.7.1",
-    "bare-path": "^3.0.0"
-  },
   "devDependencies": {
+    "bare-fs": "^4.7.1",
+    "bare-path": "^3.0.0",
     "bare-stream": "^2.13.1",
     "brittle": "^3.19.0",
     "lunte": "^1.2.0",
