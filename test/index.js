@@ -16,6 +16,10 @@ require('./table')
 require('./stopwatch')
 require('./timer')
 require('./filepicker')
+require('./checkbox')
+require('./radio')
+require('./select')
+require('./focus')
 
 test('works', (t) => {
   t.pass()

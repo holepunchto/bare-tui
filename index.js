@@ -37,6 +37,10 @@ const paginator = require('./components/paginator')
 const stopwatch = require('./components/stopwatch')
 const timer = require('./components/timer')
 const filepicker = require('./components/filepicker')
+const checkbox = require('./components/checkbox')
+const radio = require('./components/radio')
+const select = require('./components/select')
+const focus = require('./components/focus')
 
 module.exports = {
   Program,
@@ -59,5 +63,9 @@ module.exports = {
   paginator, // paginator.create({ perPage, total, type }) — page state + indicator
   stopwatch, // stopwatch.create({ interval }) — counts up; start/stop/toggle
   timer, // timer.create({ timeout, interval }) — counts down; emits timer.timeout
-  filepicker // filepicker.create({ fs, path, cwd }) — browse + pick; filepicker.mock(tree)
+  filepicker, // filepicker.create({ fs, path, cwd }) — browse + pick; filepicker.mock(tree)
+  checkbox, // checkbox.create({ label, checked }) — boolean toggle (space)
+  radio, // radio.create({ options, selected }) — single choice; value()
+  select, // select.create({ options, placeholder }) — dropdown; view() + menuView()
+  focus // focus.create({ items }) — ordered focus ring across child components
 }

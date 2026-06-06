@@ -162,6 +162,10 @@ Ready-made, composable pieces — each is a model (`update`/`view`) you embed in
 | [autocomplete](docs/autocomplete.md) | Text field with a suggestion menu       |
 | [textarea](docs/textarea.md)         | Multi-line text editor                  |
 | [list](docs/list.md)                 | Selectable, filterable list             |
+| [select](docs/select.md)             | Compact dropdown over a fixed list      |
+| [radio](docs/radio.md)               | Single choice from a fixed set          |
+| [checkbox](docs/checkbox.md)         | Boolean toggle                          |
+| [focus](docs/focus.md)               | Focus ring across child components      |
 | [table](docs/table.md)               | Columns with selectable, scrolling rows |
 | [viewport](docs/viewport.md)         | Scrollable window over long content     |
 | [paginator](docs/paginator.md)       | Page state + indicator                  |
@@ -218,8 +222,9 @@ bare-tui is built to be tested headlessly — no real terminal, no real I/O.
 
 Runnable, one per concept, in [`examples/`](examples):
 
-`counter` · `form` · `list` · `table` · `dashboard` · `pager` · `progress` ·
-`paginator` · `mouse` · `textarea` · `timer` · `filepicker` · `claude-code`
+`counter` · `form` · `controls` · `list` · `table` · `dashboard` · `pager` ·
+`progress` · `paginator` · `mouse` · `textarea` · `timer` · `filepicker` ·
+`claude-code`
 
 ```sh
 bare examples/dashboard.js
