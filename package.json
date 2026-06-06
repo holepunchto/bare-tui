@@ -1,5 +1,5 @@
 {
-  "name": "@holepunchto/bare-tui",
+  "name": "bare-tui",
   "version": "0.0.1",
   "description": "A little TUI framework for Bare, based on bubbletea",
   "main": "index.js",
