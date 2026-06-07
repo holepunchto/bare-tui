@@ -354,9 +354,12 @@ class Style {
     for (let i = 0; i < pad[0]; i++) lines.unshift(blank)
     for (let i = 0; i < pad[2]; i++) lines.push(blank)
 
-    // 4. text styling — wraps padding too so a background fills the box
+    // 4. text styling — wraps padding too so a background fills the box.
+    // Re-apply the block's SGR after every reset *inside* the content, so a
+    // background (or any attribute) covers the whole line instead of dying at
+    // the first nested span's reset and leaving the remainder unstyled.
     const open = this._open()
-    if (open) lines = lines.map((line) => open + line + RESET)
+    if (open) lines = lines.map((line) => open + line.split(RESET).join(RESET + open) + RESET)
 
     // 5. border
     if (p.border) lines = applyBorder(lines, innerW, p.border, p.borderSides, p.borderFg)

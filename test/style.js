@@ -55,6 +55,24 @@ test('style: text decoration wraps content but does not change width', (t) => {
   t.ok(out.endsWith('\x1b[0m'), 'resets at the end')
 })
 
+test('style: a background fills the whole line, even past nested resets', (t) => {
+  // Pre-styled content carries its own reset; the background must re-open after
+  // it so the rest of the line (and padding) keeps the fill instead of falling
+  // back to the terminal default.
+  const inner = style().foreground('cyan').render('hi') + ' tail'
+  const out = style().background('#0d0b1f').width(12).render(inner)
+  const BG = '48;2;13;11;31'
+  // Drop the leading open + trailing reset, then split on resets: every segment
+  // that still has visible text must re-assert the background.
+  const reset = '\x1b[0m'
+  const segs = out.slice(0, -reset.length).split(reset)
+  for (const seg of segs) {
+    if (stripAnsi(seg).trim() === '') continue
+    t.ok(seg.includes(BG), 'segment "' + stripAnsi(seg) + '" keeps the background')
+  }
+  t.is(stripAnsi(out), 'hi tail     ', 'visible text + padding intact')
+})
+
 test('style: width pads and aligns', (t) => {
   t.is(stripAnsi(style().width(5).render('hi')), 'hi   ', 'left-pads to width')
   t.is(stripAnsi(style().width(5).align(position.right).render('hi')), '   hi', 'right alignment')
