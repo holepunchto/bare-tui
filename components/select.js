@@ -144,11 +144,12 @@ class Select {
 
     const rows = shown.map((o, i) => {
       const isSel = start + i === this.highlight
-      if (isSel)
+      if (isSel) {
         return style()
           .foreground('black')
           .background('magenta')
           .render(' ' + o.label + ' ')
+      }
       return ' ' + o.label
     })
 

@@ -37,6 +37,22 @@ function tick(ms, fn) {
     })
 }
 
+// Suspend the TUI, run an async function with the terminal handed back to the
+// shell, then resume and repaint. Use it to drop into an external program that
+// needs the real terminal — an editor ($EDITOR), a pager, a sub-shell:
+//
+//   return [model, suspend(async () => {
+//     await runEditor(file)              // owns the TTY while it runs
+//     return { type: 'edited', file }    // delivered to update() after resume
+//   })]
+//
+// The runtime detaches the terminal (drops raw mode, leaves the alt-screen,
+// releases stdin) before calling fn and re-attaches + repaints after it
+// settles. Whatever Msg fn resolves to is dispatched once the TUI is back.
+function suspend(fn) {
+  return { __suspend: fn }
+}
+
 // Like tick, but aligned to wall-clock boundaries: every(1000, ...) fires on
 // each whole second rather than one second after it happened to start. Keeps
 // repeated timers from drifting. Re-issue from update() to keep it going.
@@ -48,4 +64,4 @@ function every(ms, fn) {
     })
 }
 
-module.exports = { quit, batch, sequence, tick, every }
+module.exports = { quit, batch, sequence, tick, every, suspend }

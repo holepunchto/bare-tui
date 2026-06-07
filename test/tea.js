@@ -139,6 +139,59 @@ test('tea: teardown does not cascade a stream error', async (t) => {
   t.is(streamError, null, 'no premature-close error during/after teardown')
 })
 
+test('tea: suspend hands off the terminal, then resumes and repaints', async (t) => {
+  const input = new PassThrough()
+  const output = captureStream()
+  let suspendedDuringFn = null
+
+  class Model {
+    constructor() {
+      this.edited = null
+    }
+    update(msg) {
+      if (msg.type === 'key' && String(msg) === 's') {
+        return [
+          this,
+          {
+            __suspend: async () => {
+              await Promise.resolve()
+              suspendedDuringFn = program._suspended
+              return { type: 'edited', value: 'hi' }
+            }
+          }
+        ]
+      }
+      if (msg.type === 'edited') {
+        this.edited = msg.value
+        return [this, null]
+      }
+      if (msg.type === 'key' && String(msg) === 'q') return [this, quit]
+      return [this, null]
+    }
+    view() {
+      return 'edited=' + (this.edited || '-')
+    }
+  }
+
+  const model = new Model()
+  const program = new Program(model, { input, output, isTTY: true })
+  const done = program.run()
+
+  input.write(Buffer.from('s')) // suspend
+  await settle()
+  input.write(Buffer.from('q')) // quit
+  const final = await done
+
+  const out = output.text()
+  const enters = out.split('\x1b[?1049h').length - 1
+  const leaves = out.split('\x1b[?1049l').length - 1
+  t.ok(suspendedDuringFn, 'program was suspended while the fn ran')
+  t.is(final.edited, 'hi', 'the suspend result reached update() after resume')
+  t.ok(enters >= 2, 'alt-screen re-entered on resume')
+  t.ok(leaves >= 2, 'alt-screen left on suspend (and again on teardown)')
+  t.ok(out.includes('edited=hi'), 'repainted with the post-resume state')
+})
+
 test('tea: restores the terminal even when update throws', async (t) => {
   const input = new PassThrough()
   const output = captureStream()

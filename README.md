@@ -20,8 +20,7 @@ This tutorial assumes you have [Bare](https://bare.pears.com) installed. We'll b
 bare-tui programs are made of a **model** describing the application state, and three methods on that model:
 
 - **`init`** — a function that returns an initial _command_ (or `null`).
-- **`update`** — a function that handles incoming _messages_ and updates the
-  model.
+- **`update`** — a function that handles incoming _messages_ and updates the model.
 - **`view`** — a function that renders the model to a string.
 
 ### The Model
@@ -108,13 +107,26 @@ Run it with `bare counter.js`. The `Program` puts the terminal into raw mode, en
 A **command** (`Cmd`) is a function `() => Msg | Promise<Msg> | null`. The runtime runs it _off_ the update path and feeds whatever message it returns back into `update`. This is how you do anything asynchronous — timers, file or network I/O, talking to a worker — without blocking the UI.
 
 ```js
-const { quit, batch, sequence, tick, every } = require('bare-tui')
+const { quit, batch, sequence, tick, every, suspend } = require('bare-tui')
 
 quit // a Cmd that quits the program
 tick(1000, () => ({ type: 'tick' })) // fire a Msg after 1s
 every(1000, () => ({ type: 'tick' })) // fire on the wall-clock second
 batch(cmdA, cmdB) // run several Cmds concurrently
 sequence(cmdA, cmdB) // run several Cmds in order
+suspend(fn) // drop the TUI, run fn() with the real terminal, then resume
+```
+
+Use `suspend` to hand the terminal to an external program that needs it — an editor (`$EDITOR`), a pager, a sub-shell. The runtime drops raw mode, leaves the alt-screen and releases stdin while `fn()` runs, then re-attaches and repaints; the message `fn` resolves to is delivered once the TUI is back:
+
+```js
+return [
+  model,
+  suspend(async () => {
+    await spawnEditor(file) // owns the real terminal while it runs
+    return { type: 'edited', file }
+  })
+]
 ```
 
 An async command just returns a promise:

@@ -19,6 +19,19 @@ const widths = (block) => block.split('\n').map(width)
 // True if every line has the same visible width (a proper rectangle).
 const rectangular = (block) => new Set(widths(block)).size === 1
 
+test('style: layout helpers are attached to the factory (public API)', (t) => {
+  // The README documents these as `style.x`, so they must hang off the factory,
+  // not only the module's named exports.
+  t.is(style.stripAnsi, stripAnsi, 'style.stripAnsi is exposed')
+  t.is(style.width, width, 'style.width is exposed')
+  t.is(style.height, height, 'style.height is exposed')
+  t.is(style.truncate, truncate, 'style.truncate is exposed')
+  t.is(style.joinHorizontal, joinHorizontal, 'style.joinHorizontal is exposed')
+  t.is(style.joinVertical, joinVertical, 'style.joinVertical is exposed')
+  t.is(style.borders, borders, 'style.borders is exposed')
+  t.is(style.position, position, 'style.position is exposed')
+})
+
 test('width: ignores ANSI and counts wide/zero-width glyphs', (t) => {
   t.is(width('abc'), 3, 'plain ascii')
   t.is(width('\x1b[1m\x1b[31mabc\x1b[0m'), 3, 'ignores SGR sequences')

@@ -44,7 +44,7 @@ const focus = require('./components/focus')
 
 module.exports = {
   Program,
-  ...commands, // quit, batch, sequence, tick, every
+  ...commands, // quit, batch, sequence, tick, every, suspend
   KeyMsg: messages.KeyMsg,
   key, // key.matches(msg, ...chords | bindings), key.binding({ keys, help })
   ansi,

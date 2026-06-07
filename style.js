@@ -454,6 +454,7 @@ style.joinVertical = joinVertical
 style.width = width
 style.height = height
 style.truncate = truncate
+style.stripAnsi = stripAnsi
 
 module.exports = {
   style,

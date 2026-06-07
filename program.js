@@ -62,6 +62,7 @@ module.exports = class Program {
     this._wake = null
     this._running = false
     this._tornDown = false
+    this._suspended = false // true while the terminal is handed to a child process
 
     this._decoder = null
     this._onInput = null
@@ -125,6 +126,9 @@ module.exports = class Program {
   // Mark the view dirty and schedule a render at most once per frame. Updates
   // that land in the same frame collapse into one write.
   _invalidate() {
+    // While suspended the terminal belongs to a child process; a render here
+    // would paint over it. We repaint in full on resume instead.
+    if (this._suspended) return
     if (this._frameMs === 0) {
       this.renderer.render(this._view())
       return
@@ -247,6 +251,59 @@ module.exports = class Program {
     }
   }
 
+  // Hand the terminal back to the shell: stop decoding input, drop raw mode,
+  // stop reading stdin, and leave the alt-screen. Mirrors the terminal parts of
+  // _teardown, but keeps the model and loop alive.
+  //
+  // Crucially we must NOT close stdin's fd here: a child spawned with
+  // `stdio: 'inherit'` inherits fd 0 directly, and a closed fd would hand it a
+  // dead stdin (the editor exits instantly). So we detach + pause and leave the
+  // fd open for the child.
+  _suspendTerminal() {
+    this._suspended = true
+    this._cancelFrame()
+    try {
+      if (this.input && this._onInput) this.input.removeListener('data', this._onInput)
+    } catch {}
+    try {
+      if (this._decoder && this._onKey) this._decoder.removeListener('data', this._onKey)
+    } catch {}
+    try {
+      this._decoder?.destroy()
+    } catch {}
+    this._decoder = null
+    try {
+      if (this.input && this.inputIsTTY && this.input.setRawMode) this.input.setRawMode(false)
+    } catch {}
+    try {
+      this.input?.pause?.()
+    } catch {}
+    try {
+      if (this._mouseMode) this.output.write(mouse.disable(this._mouseMode))
+    } catch {}
+    this.renderer.stop()
+  }
+
+  // Reclaim the terminal after a suspend: re-enter the screen, restore raw mode,
+  // re-attach the decoder, resume reading, and force a full repaint.
+  _resumeTerminal() {
+    this.renderer.start()
+    if (this.input) {
+      try {
+        if (this.inputIsTTY && this.input.setRawMode) this.input.setRawMode(true)
+      } catch {}
+      this._decoder = new KeyDecoder()
+      this._decoder.on('data', this._onKey)
+      this.input.on('data', this._onInput)
+      try {
+        this.input.resume?.()
+      } catch {}
+    }
+    if (this._mouseMode) this.output.write(mouse.enable(this._mouseMode))
+    this.renderer.clear() // next render repaints everything
+    this._suspended = false
+  }
+
   // Normalise update()'s return into a [model, cmd] pair. Accepts a bare model
   // (no cmd) or null (no change), so update() can be terse.
   _update(msg) {
@@ -290,6 +347,23 @@ module.exports = class Program {
         if (!this._running) return
         await this._runCmd(c)
       }
+      return
+    }
+
+    // suspend: hand the terminal to fn() (a child process), then resume.
+    if (cmd.__suspend) {
+      this._suspendTerminal()
+      let msg = null
+      try {
+        msg = await cmd.__suspend()
+      } catch (error) {
+        msg = { type: 'error', error }
+      }
+      if (this._running) {
+        this._resumeTerminal()
+        this._invalidate() // repaint the restored screen
+      }
+      this.send(msg)
       return
     }
 
