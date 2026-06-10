@@ -103,6 +103,31 @@ test('filepicker: surfaces read errors', async (t) => {
   t.is(fp.entries.length, 0, 'no entries on error')
 })
 
+test('filepicker (dir mode): enter selects the highlighted directory', async (t) => {
+  const fp = picker({ src: { 'a.js': null }, 'note.txt': null }, { pick: 'dir' })
+  fp.update(await fp.init()()) // cursor on "src" (dirs sort first)
+
+  const [, cmd] = fp.update(named('enter'))
+  t.is(fp.cwd, '/', 'enter does NOT descend in dir mode')
+  t.is(fp.selectedPath(), '/src', 'selected the directory')
+  t.alike(await cmd(), { type: 'filepicker.select', path: '/src' }, 'emits a select Msg')
+})
+
+test('filepicker (dir mode): →/l descends, files are not selectable', async (t) => {
+  const fp = picker({ src: { nested: {}, 'a.js': null }, 'note.txt': null }, { pick: 'dir' })
+  fp.update(await fp.init()())
+
+  const [, cmd] = fp.update(named('right')) // descend into "src"
+  t.is(fp.cwd, '/src', 'descended with →')
+  fp.update(await cmd())
+
+  // entries are: nested (dir), a.js (file). Move cursor onto the file.
+  fp.update(named('down'))
+  const [, fileCmd] = fp.update(named('enter'))
+  t.is(fileCmd, null, 'enter on a file is a no-op in dir mode')
+  t.is(fp.selectedPath(), null, 'nothing selected')
+})
+
 test('filepicker.mock: readdir reports entry types', (t) => {
   const m = filepicker.mock({ dir: { nested: {} }, 'file.txt': null })
   m.fs.readdir('/', { withFileTypes: true }, (err, ents) => {

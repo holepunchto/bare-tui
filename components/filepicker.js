@@ -1,4 +1,4 @@
-// filepicker — browse a filesystem and pick a file.
+// filepicker — browse a filesystem and pick a file (or a directory).
 //
 // Dependency-injected so the framework core stays filesystem-free: pass your
 // own { fs, path } to create(), or let it lazily require('bare-fs') /
@@ -6,12 +6,18 @@
 // filepicker, so consumers who don't use it never pull those modules in.
 //
 //   const fp = filepicker.create({ height: 12 })            // real fs
+//   const fp = filepicker.create({ pick: 'dir' })           // choose a directory
 //   const fp = filepicker.create({ ...filepicker.mock(tree), cwd: '/' })  // tests
+//
+// `pick` ('file' default, or 'dir') decides what enter selects. In 'file' mode
+// enter/→/l opens a directory or selects a file. In 'dir' mode →/l descends into
+// the highlighted directory while enter SELECTS it; files are shown dimmed and
+// can't be chosen.
 //
 // Directory reads happen through Cmds (async), surfacing as Msgs:
 //   { type: 'filepicker.entries', dir, entries }
 //   { type: 'filepicker.error',   dir, error }
-//   { type: 'filepicker.select',  path }   // a file was chosen
+//   { type: 'filepicker.select',  path }   // a file (or directory) was chosen
 //
 // The only fs surface used is fs.readdir(dir, { withFileTypes: true }, cb); the
 // only path surface is path.join and path.dirname. The mock implements exactly
@@ -27,6 +33,8 @@ const keys = {
   up: key.binding({ keys: ['up', 'k'], help: { key: '↑/k', desc: 'up' } }),
   down: key.binding({ keys: ['down', 'j'], help: { key: '↓/j', desc: 'down' } }),
   open: key.binding({ keys: ['enter', 'right', 'l'], help: { key: '↵', desc: 'open' } }),
+  descend: key.binding({ keys: ['right', 'l'], help: { key: '→/l', desc: 'open dir' } }),
+  choose: key.binding({ keys: ['enter'], help: { key: '↵', desc: 'select' } }),
   back: key.binding({ keys: ['backspace', 'left', 'h'], help: { key: '⌫', desc: 'up dir' } })
 }
 
@@ -55,6 +63,7 @@ class FilePicker {
     this.cwd = opts.cwd
     this.height = opts.height || 12
     this.showHidden = !!opts.showHidden
+    this.pick = opts.pick === 'dir' ? 'dir' : 'file'
 
     this.entries = []
     this.cursor = 0
@@ -113,10 +122,32 @@ class FilePicker {
   }
 
   _key(msg) {
-    if (key.matches(msg, keys.up)) this._move(-1)
-    else if (key.matches(msg, keys.down)) this._move(1)
-    else if (key.matches(msg, keys.back)) return this._open(this.path.dirname(this.cwd))
-    else if (key.matches(msg, keys.open)) {
+    if (key.matches(msg, keys.up)) {
+      this._move(-1)
+      return [this, null]
+    }
+    if (key.matches(msg, keys.down)) {
+      this._move(1)
+      return [this, null]
+    }
+    if (key.matches(msg, keys.back)) return this._open(this.path.dirname(this.cwd))
+
+    // dir mode: →/l descends into the highlighted directory, enter selects it;
+    // files aren't selectable.
+    if (this.pick === 'dir') {
+      const entry = this.entries[this.cursor]
+      if (!entry || !entry.directory) return [this, null]
+      const full = this.path.join(this.cwd, entry.name)
+      if (key.matches(msg, keys.descend)) return this._open(full)
+      if (key.matches(msg, keys.choose)) {
+        this.selected = full
+        return [this, () => ({ type: 'filepicker.select', path: full })]
+      }
+      return [this, null]
+    }
+
+    // file mode: enter/→/l opens a directory or selects a file.
+    if (key.matches(msg, keys.open)) {
       const entry = this.entries[this.cursor]
       if (!entry) return [this, null]
       const full = this.path.join(this.cwd, entry.name)
@@ -159,7 +190,11 @@ class FilePicker {
         const entry = this.entries[p]
         const label = entry.directory ? entry.name + '/' : entry.name
         const text = (p === this.cursor ? '› ' : '  ') + label
-        rows.push(p === this.cursor ? selectedStyle(text) : entry.directory ? dirStyle(text) : text)
+        // In dir mode files aren't selectable, so render them dimmed.
+        const plain = this.pick === 'dir' && !entry.directory ? dim(text) : text
+        rows.push(
+          p === this.cursor ? selectedStyle(text) : entry.directory ? dirStyle(text) : plain
+        )
       }
     }
     while (rows.length < this.height) rows.push('')
