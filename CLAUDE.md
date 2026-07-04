@@ -114,6 +114,27 @@ Concrete consequences for a larger app:
   layout: e.g. `bodyHeight = totalHeight - headerHeight - footerHeight`, and
   size the scrolling component to `bodyHeight`. Everything flows from the
   `{ type: 'resize', width, height }` message.
+- **Measure your chrome, don't count it.** `headerHeight`/`footerHeight` are
+  tempting to hardcode as a line-count constant (`height - 6`, `height - 4`).
+  That constant silently goes stale the moment you add a line to the header,
+  the footer, or a border — and the whole view then renders **one line taller
+  than the terminal**, which makes the terminal itself scroll on the next full
+  repaint. After that scroll, every future diff-render addresses rows by an
+  absolute index that no longer matches reality: content looks like it "jumps
+  down a line" the moment anything redraws (e.g. the first keystroke), and
+  borders appear duplicated or missing. Render the header/footer first and
+  measure the real height with `style.height(box)` instead of a hand-counted
+  number:
+  ```js
+  _layout() {
+    this.headerH = style.height(this._header())
+    this.footerH = style.height(this._footer())
+    this.body.height = Math.max(3, this.height - this.headerH - this.footerH)
+  }
+  ```
+  This only works if `_header()`/`_footer()` don't themselves depend on
+  `body.height` — keep the dependency one-directional (chrome sizes the body,
+  never the reverse).
 - **Don't let transient UI resize the layout.** A dropdown, toast, or hint that
   appears on a keystroke should not push the rest of the screen around. Prefer
   to **overlay** it onto a region you already reserved rather than inserting
@@ -218,3 +239,6 @@ Now a test can `require` it, construct `App`, and drive it with injected streams
 - Child component swallowing `ctrl+c` → no escape hatch. Match global keys
   first.
 - Forgetting to thread a child's Cmd up → its animation/IO silently never runs.
+- Hardcoded chrome-line count in a height formula → view renders one line
+  taller than the terminal, which scrolls and desyncs the diff renderer's row
+  addressing. Measure with `style.height(box)` instead.

@@ -405,7 +405,11 @@ class App {
     this.runId = 0
     this.activeIndex = -1
     this.follow = true
+    // Placeholder chrome heights for the one frame rendered before the first
+    // resize — _layout() measures the real values (from the real header/footer
+    // render) on every resize after that, so these never go stale.
     this.headerH = 4
+    this.footerH = 4
 
     this._welcome()
   }
@@ -676,8 +680,14 @@ class App {
     return Math.max(20, this.width - 6)
   }
 
+  // Measure the actual chrome instead of hardcoding its line count — a
+  // magic number here silently goes stale the moment header/footer grows by
+  // a line, and the body then overflows the terminal height by exactly that
+  // much (see bare-tui's CLAUDE.md: "measure your chrome, don't count it").
   _layout() {
-    this.body.height = Math.max(3, this.height - this.headerH - 4)
+    this.headerH = style.height(this._header())
+    this.footerH = style.height(this._footer())
+    this.body.height = Math.max(3, this.height - this.headerH - this.footerH)
     this.input.maxVisible = Math.min(6, Math.max(2, this.body.height - 2))
   }
 
@@ -783,7 +793,6 @@ class App {
       .border(style.borders.rounded)
       .borderForeground(this.theme.accent)
       .render(inner)
-    this.headerH = style.height(box)
     return box
   }
 
