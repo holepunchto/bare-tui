@@ -261,7 +261,9 @@ A Tui bird of New Zealand
 Apache-2.0
 
 <!-- bare-refgen:api start -->
+
 ## API
 
 _This module ships no documented public exports in its type declarations._
+
 <!-- bare-refgen:api end -->
