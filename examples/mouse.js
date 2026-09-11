@@ -3,7 +3,8 @@
 //   bare examples/mouse.js
 //
 // Click or drag to draw, right-click to erase, wheel to cycle the brush, c to
-// clear, q to quit. Uses 'drag' tracking so held-button motion paints.
+// clear, q to quit. Uses 'drag' tracking so held-button motion paints, and
+// focus reporting so the status bar dims when you switch to another window.
 const { Program, quit, key, style } = require('..')
 
 const BRUSHES = ['█', '▓', '▒', '░', '●', '*', '#', '·']
@@ -15,6 +16,10 @@ class Paint {
     this.cells = new Map() // 'x,y' -> brush char
     this.brush = 0
     this.last = '—'
+    // Focus reports are transitions, so assume we start focused: a terminal
+    // that supports mode 1004 says nothing until the focus actually changes,
+    // and plenty of terminals never say anything at all.
+    this.focused = true
   }
 
   update(msg) {
@@ -42,6 +47,10 @@ class Paint {
         }
         return [this, null]
 
+      case 'focus':
+        this.focused = msg.focused
+        return [this, null]
+
       default:
         return [this, null]
     }
@@ -58,7 +67,7 @@ class Paint {
     lines[0] = style()
       .width(this.width)
       .foreground('black')
-      .background('cyan')
+      .background(this.focused ? 'cyan' : 'gray')
       .render(
         ` paint  brush:${BRUSHES[this.brush]}  ${this.last}  · drag draw · right erase · wheel brush · c clear · q quit`
       )
@@ -66,4 +75,4 @@ class Paint {
   }
 }
 
-new Program(new Paint(), { mouse: 'drag' }).run()
+new Program(new Paint(), { mouse: 'drag', focus: true }).run()

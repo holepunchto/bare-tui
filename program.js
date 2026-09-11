@@ -6,7 +6,8 @@
 //   view()        -> string                render current state to text
 //
 // Program wires those to the terminal: it puts the input into raw mode, decodes
-// keystrokes into KeyMsgs, turns SIGWINCH into resize Msgs, runs the
+// keystrokes into KeyMsgs, claims the terminal's non-key reports (mouse, and
+// focus when `focus: true`), turns SIGWINCH into resize Msgs, runs the
 // update/render loop, executes Cmds off the update path, and — crucially —
 // always restores the terminal on the way out.
 //
@@ -16,7 +17,9 @@
 const tty = require('bare-tty')
 const KeyDecoder = require('bare-ansi-escapes/key-decoder')
 const Renderer = require('./renderer')
+const ansi = require('./ansi')
 const mouse = require('./mouse')
+const { InputParser } = require('./input')
 const { KeyMsg, windowSize } = require('./messages')
 
 module.exports = class Program {
@@ -36,7 +39,16 @@ module.exports = class Program {
     // 'all' → + hover motion. Off by default.
     const m = opts.mouse
     this._mouseMode = m === true ? 'basic' : m === 'motion' ? 'drag' : m in mouse.MODES ? m : null
-    this._mouseParser = null
+
+    // Focus reporting (DEC mode 1004): the terminal reports when its window
+    // gains or loses focus as { type: 'focus', focused }. Off by default — not
+    // every terminal implements it (Terminal.app and screen don't; tmux needs
+    // `focus-events on`), and an app that doesn't care shouldn't pay for it.
+    this._focus = opts.focus === true
+
+    // Claims mouse / focus reports before the key decoder. Null when neither is
+    // enabled, so the common case writes bytes straight through.
+    this._parser = null
 
     // Only TTY fds can be put in raw mode / sized, and constructing a
     // tty.WriteStream on a non-TTY fd throws — so fall back to a no-op-ish
@@ -151,6 +163,28 @@ module.exports = class Program {
     }
   }
 
+  // The pre-parser only exists when there's something to claim; otherwise input
+  // bytes go straight to the key decoder.
+  _newParser() {
+    if (!this._mouseMode && !this._focus) return null
+    return new InputParser({ mouse: this._mouseMode, focus: this._focus })
+  }
+
+  // The input reporting modes go on together after the screen is entered and
+  // come off together before it's restored, so they never outlive the program
+  // (_teardown) or leak into a child process (_suspendTerminal).
+  _enableModes() {
+    if (this._mouseMode) this.output.write(mouse.enable(this._mouseMode))
+    if (this._focus) this.output.write(ansi.enableFocus)
+  }
+
+  _disableModes() {
+    try {
+      if (this._mouseMode) this.output.write(mouse.disable(this._mouseMode))
+      if (this._focus) this.output.write(ansi.disableFocus)
+    } catch {}
+  }
+
   _setup() {
     if (this.input) {
       if (this.inputIsTTY && this.input.setRawMode) this.input.setRawMode(true)
@@ -159,12 +193,12 @@ module.exports = class Program {
       // unpipe, and a piped source destroyed mid-stream (which is exactly what
       // teardown does) destroys the destination with a synthetic "closed before
       // ending" error. Manual forwarding has no Pipeline, so teardown is clean.
-      this._mouseParser = this._mouseMode ? new mouse.MouseParser() : null
+      this._parser = this._newParser()
       this._onKey = (key) => this.send(new KeyMsg(key))
       this._onInput = (data) => {
-        if (this._mouseParser) {
-          // Peel mouse reports off the stream; the rest is keys.
-          const { keys, events } = this._mouseParser.feed(data)
+        if (this._parser) {
+          // Peel mouse / focus reports off the stream; the rest is keys.
+          const { keys, events } = this._parser.feed(data)
           for (const event of events) this.send(event)
           if (keys.length) this._decoder.write(keys)
         } else {
@@ -181,7 +215,7 @@ module.exports = class Program {
     }
 
     this.renderer.start()
-    if (this._mouseMode) this.output.write(mouse.enable(this._mouseMode))
+    this._enableModes()
 
     // Seed the model with the initial geometry. Real TTYs report columns/rows;
     // injected streams won't, so fall back to opts then a sane default.
@@ -231,13 +265,14 @@ module.exports = class Program {
     try {
       this._decoder?.destroy()
     } catch {}
+    // Stop the reporting modes before leaving raw mode: in between the terminal
+    // is line-buffered and echoing, so a report landing in that window would be
+    // painted onto the screen we're about to hand back.
+    this._disableModes()
     try {
       if (this.input && this.inputIsTTY && this.input.setRawMode) {
         this.input.setRawMode(false)
       }
-    } catch {}
-    try {
-      if (this._mouseMode) this.output.write(mouse.disable(this._mouseMode))
     } catch {}
 
     this.renderer.stop() // show cursor, leave alt screen
@@ -272,14 +307,16 @@ module.exports = class Program {
       this._decoder?.destroy()
     } catch {}
     this._decoder = null
+    // A half-claimed sequence must not survive into the resumed session.
+    this._parser?.reset()
+    // Off before the child runs: a program that doesn't understand these reports
+    // would read them as garbage input.
+    this._disableModes()
     try {
       if (this.input && this.inputIsTTY && this.input.setRawMode) this.input.setRawMode(false)
     } catch {}
     try {
       this.input?.pause?.()
-    } catch {}
-    try {
-      if (this._mouseMode) this.output.write(mouse.disable(this._mouseMode))
     } catch {}
     this.renderer.stop()
   }
@@ -293,13 +330,14 @@ module.exports = class Program {
         if (this.inputIsTTY && this.input.setRawMode) this.input.setRawMode(true)
       } catch {}
       this._decoder = new KeyDecoder()
+      this._parser = this._newParser()
       this._decoder.on('data', this._onKey)
       this.input.on('data', this._onInput)
       try {
         this.input.resume?.()
       } catch {}
     }
-    if (this._mouseMode) this.output.write(mouse.enable(this._mouseMode))
+    this._enableModes()
     this.renderer.clear() // next render repaints everything
     this._suspended = false
   }
