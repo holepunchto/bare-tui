@@ -184,6 +184,17 @@ For any app with a scrolling transcript/log plus a live input:
   common idiom: `ctrl+c` interrupts when busy, quits when idle. Use
   `key.matches(msg, …)` — it's null- and type-safe, so you don't have to guard
   `msg.type === 'key'` first.
+- **Terminal focus is not component focus.** Everything above is about which of
+  _your_ widgets owns the keys. `new Program(model, { focus: true })` is a
+  different axis: the terminal reports whether its _window_ has the OS's
+  attention, as `{ type: 'focus', focused }`. Three rules if you use it:
+  **assume you start focused** (reports are transitions — nothing is sent until
+  the focus changes), **never gate startup on one** (plenty of terminals never
+  send any: Terminal.app, `screen`, and tmux without `focus-events on`), and if
+  you pause an animation on blur, **re-issue its tick Cmd on focus** — a stopped
+  tick loop never restarts itself, and the tick that was in flight when you
+  blurred will still land, so stamp it with the run-id pattern above or you'll
+  end up with two loops driving one spinner.
 
 ## Testing headlessly (do this — it's a first-class path)
 
@@ -239,6 +250,8 @@ Now a test can `require` it, construct `App`, and drive it with injected streams
 - Child component swallowing `ctrl+c` → no escape hatch. Match global keys
   first.
 - Forgetting to thread a child's Cmd up → its animation/IO silently never runs.
+- Pausing a loop on terminal blur without re-issuing its Cmd on focus → the
+  animation never comes back (or comes back twice). Bump the run id.
 - Hardcoded chrome-line count in a height formula → view renders one line
   taller than the terminal, which scrolls and desyncs the diff renderer's row
   addressing. Measure with `style.height(box)` instead.

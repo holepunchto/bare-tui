@@ -140,7 +140,7 @@ const load = () =>
 
 Return commands from `init` or `update`; the result comes back as a message.
 
-## Key & mouse input
+## Key, mouse & focus input
 
 Keys arrive as `{ type: 'key' }` messages (a `KeyMsg`). Match them with `key.matches`, which is null- and type-safe:
 
@@ -162,6 +162,15 @@ Enable the mouse with a Program option; clicks/scroll/drag arrive as `{ type: 'm
 ```js
 new Program(model, { mouse: true }) //  true | 'drag' | 'all'
 ```
+
+Ask for focus reporting the same way, and the terminal tells you when its window gains or loses focus — handy for pausing an animation or muting a bell while the user is elsewhere:
+
+```js
+new Program(model, { focus: true })
+// update(msg): msg.type === 'focus' -> msg.focused is true on focus in, false on focus out
+```
+
+Focus messages are **transitions**, not state: nothing is sent until the focus actually changes, so assume you start focused. They may also never arrive at all — Terminal.app, `screen` and the Linux console don't implement the mode, and under tmux the pane needs `set -g focus-events on`. Don't gate anything your app needs on receiving one.
 
 ## Components
 

@@ -47,6 +47,15 @@ function windowSize(width, height) {
   return { type: 'resize', width, height }
 }
 
+// Emitted when the terminal window gains or loses focus. Only ever produced
+// when the Program was created with `focus: true`, which puts the terminal into
+// focus reporting (DEC private mode 1004). Reports are *transitions*: a terminal
+// that supports the mode says nothing until the focus actually changes, so a
+// model should assume it starts focused rather than wait to be told.
+function focusMsg(focused) {
+  return { type: 'focus', focused }
+}
+
 // The runtime tears down and exits when it sees this. `quit` (see commands.js)
 // is the Cmd that produces it.
 function quitMsg() {
@@ -59,4 +68,4 @@ function errorMsg(error) {
   return { type: 'error', error }
 }
 
-module.exports = { KeyMsg, windowSize, quitMsg, errorMsg }
+module.exports = { KeyMsg, windowSize, focusMsg, quitMsg, errorMsg }

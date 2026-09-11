@@ -1,9 +1,13 @@
-// Tests for mouse support: SGR decoding, the streaming parser (incl. mixed
-// key/mouse bytes and split reports), and Program integration.
+// Tests for mouse support: SGR decoding, mouse reports through the shared input
+// parser (incl. mixed key/mouse bytes and split reports), and Program
+// integration. The parser itself is covered more broadly in test/input.js.
 const { test } = require('brittle')
 const { PassThrough, Writable } = require('bare-stream')
 const { Program, quit } = require('..')
 const mouse = require('../mouse')
+const { InputParser } = require('../input')
+
+const mouseParser = () => new InputParser({ mouse: 'basic' })
 
 function captureStream() {
   const chunks = []
@@ -48,8 +52,8 @@ test('mouse.decode: buttons, release, wheel, motion, modifiers', (t) => {
   t.ok(mod.ctrl && mod.shift && !mod.alt, 'modifier bits decoded')
 })
 
-test('MouseParser: separates mouse reports from key bytes', (t) => {
-  const p = new mouse.MouseParser()
+test('input parser (mouse): separates mouse reports from key bytes', (t) => {
+  const p = mouseParser()
   const { keys, events } = p.feed(Buffer.from('a\x1b[<0;3;4Mb'))
 
   t.is(events.length, 1, 'one mouse event extracted')
@@ -57,8 +61,8 @@ test('MouseParser: separates mouse reports from key bytes', (t) => {
   t.is(keys.toString('latin1'), 'ab', 'surrounding key bytes preserved')
 })
 
-test('MouseParser: buffers a report split across feeds', (t) => {
-  const p = new mouse.MouseParser()
+test('input parser (mouse): buffers a report split across feeds', (t) => {
+  const p = mouseParser()
 
   const first = p.feed(Buffer.from('\x1b[<0;5;6')) // no terminator yet
   t.is(first.events.length, 0, 'incomplete report yields nothing')
@@ -70,8 +74,8 @@ test('MouseParser: buffers a report split across feeds', (t) => {
   t.is(second.events[0].y, 5)
 })
 
-test('MouseParser: leaves arrow-key escapes untouched', (t) => {
-  const p = new mouse.MouseParser()
+test('input parser (mouse): leaves arrow-key escapes untouched', (t) => {
+  const p = mouseParser()
   const { keys, events } = p.feed(Buffer.from('\x1b[A'))
   t.is(events.length, 0, 'no mouse events')
   t.is(keys.toString('latin1'), '\x1b[A', 'arrow sequence forwarded to the decoder')

@@ -30,5 +30,12 @@ module.exports = {
 
   // SGR mouse tracking (button events + SGR extended coordinates).
   enableMouse: CSI + '?1000h' + CSI + '?1006h',
-  disableMouse: CSI + '?1006l' + CSI + '?1000l'
+  disableMouse: CSI + '?1006l' + CSI + '?1000l',
+
+  // Focus reporting (DEC private mode 1004) — the terminal sends ESC [ I when
+  // the window gains focus and ESC [ O when it loses it. Plain constants rather
+  // than the enable(mode)/disable(mode) functions mouse.js exposes, because
+  // there is only one mode to set; see input.js for the reports themselves.
+  enableFocus: CSI + '?1004h',
+  disableFocus: CSI + '?1004l'
 }

@@ -1,9 +1,8 @@
 // Mouse support — SGR (1006) tracking and decoding.
 //
-// bare-ansi-escapes' KeyDecoder doesn't understand mouse reports, so the
-// Program runs raw input through MouseParser first: it pulls SGR sequences
-// (\x1b[<b;x;yM for press / motion, \x1b[<b;x;ym for release) out of the byte
-// stream as MouseMsgs and forwards everything else to the key decoder.
+// This module owns the mode strings and the report decoder; pulling the reports
+// out of the raw byte stream is input.js's job (it claims \x1b[<b;x;yM for
+// press / motion and \x1b[<b;x;ym for release, and calls decode() on the body).
 //
 // A MouseMsg looks like:
 //   { type: 'mouse', action, button, x, y, ctrl, alt, shift }
@@ -58,45 +57,4 @@ function decode(body, final) {
   return { type: 'mouse', action, button, x: col - 1, y: row - 1, ...mods }
 }
 
-// Splits a byte stream into MouseMsgs and the remaining key bytes. Holds an
-// incomplete trailing mouse sequence between feeds; uses latin1 throughout so
-// non-mouse bytes (including 8-bit meta keys) round-trip to the decoder intact.
-//
-// Note: a mouse report split across two reads *before* its `<` arrives can't be
-// distinguished from a key escape, so we only buffer once `\x1b[<` is seen.
-// Terminals emit each report in a single write, so this is not a problem in
-// practice.
-class MouseParser {
-  constructor() {
-    this._partial = ''
-  }
-
-  feed(buf) {
-    const s = this._partial + buf.toString('latin1')
-    this._partial = ''
-
-    let keys = ''
-    const events = []
-    let i = 0
-    while (i < s.length) {
-      if (s[i] === '\x1b' && s[i + 1] === '[' && s[i + 2] === '<') {
-        let j = i + 3
-        while (j < s.length && s[j] !== 'M' && s[j] !== 'm') j++
-        if (j >= s.length) {
-          this._partial = s.slice(i) // incomplete report; wait for more
-          break
-        }
-        const ev = decode(s.slice(i + 3, j), s[j])
-        if (ev) events.push(ev)
-        i = j + 1
-      } else {
-        keys += s[i]
-        i++
-      }
-    }
-
-    return { keys: Buffer.from(keys, 'latin1'), events }
-  }
-}
-
-module.exports = { enable, disable, decode, MouseParser, MODES }
+module.exports = { enable, disable, decode, MODES }
