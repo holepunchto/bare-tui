@@ -7,12 +7,22 @@
 // update() returns `[model, cmd]`. `cmd` may be a single Cmd, an array of Cmds
 // (run concurrently — see batch), a sequence marker (run in order — see
 // sequence), or null for "do nothing".
-const { quitMsg } = require('./messages')
+const { quitMsg, repaintMsg } = require('./messages')
 
 // `quit` is itself a Cmd: return it from update() to tear down and exit, e.g.
 //   return [model, quit]
 function quit() {
   return quitMsg()
+}
+
+// Force a full repaint of the screen on the next frame:
+//   return [model, repaint]
+// The renderer normally rewrites only the rows whose text changed, which is
+// what makes it fast — but it also means it cannot know when something else has
+// drawn over the screen. Reach for this after spawning something that writes to
+// the same terminal, or whenever the display might have been disturbed.
+function repaint() {
+  return repaintMsg()
 }
 
 // Run several Cmds concurrently. The runtime expands arrays, so batch is just a
@@ -64,4 +74,4 @@ function every(ms, fn) {
     })
 }
 
-module.exports = { quit, batch, sequence, tick, every, suspend }
+module.exports = { quit, repaint, batch, sequence, tick, every, suspend }

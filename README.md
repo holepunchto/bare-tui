@@ -107,9 +107,10 @@ Run it with `bare counter.js`. The `Program` puts the terminal into raw mode, en
 A **command** (`Cmd`) is a function `() => Msg | Promise<Msg> | null`. The runtime runs it _off_ the update path and feeds whatever message it returns back into `update`. This is how you do anything asynchronous — timers, file or network I/O, talking to a worker — without blocking the UI.
 
 ```js
-const { quit, batch, sequence, tick, every, suspend } = require('bare-tui')
+const { quit, repaint, batch, sequence, tick, every, suspend } = require('bare-tui')
 
 quit // a Cmd that quits the program
+repaint // a Cmd that forces a full repaint of the screen
 tick(1000, () => ({ type: 'tick' })) // fire a Msg after 1s
 every(1000, () => ({ type: 'tick' })) // fire on the wall-clock second
 batch(cmdA, cmdB) // run several Cmds concurrently
@@ -139,6 +140,21 @@ const load = () =>
 ```
 
 Return commands from `init` or `update`; the result comes back as a message.
+
+## Repainting
+
+The renderer rewrites only the rows whose text actually changed, which is what makes a redraw-per-keystroke loop feel instant. The flip side is that it has no way to know when _something else_ has drawn over the screen — a native library logging to the same fd, a multiplexer redrawing a pane, a terminal that dropped the alt-screen. Those rows are never repainted on their own: a header with a clock heals itself on the next frame, while a static body stays broken.
+
+When you know the screen may have been disturbed, ask for a full repaint:
+
+```js
+return [model, repaint] // from update()
+program.repaint() // from outside the loop
+```
+
+The runtime already repaints on its own whenever the window is resized, after a `suspend`, and — if you enabled `focus: true` — whenever the window regains focus.
+
+You should not need it for your own output: the renderer knows the screen size and fits every frame to it, dropping rows past the last one and trimming lines to the visible width (measured in cells, so ANSI escapes and wide glyphs are counted correctly). That matters because a frame one row too tall scrolls the terminal, and every absolute cursor move after that addresses the wrong row — permanently. If content is disappearing off the bottom or right, your layout is bigger than the terminal; measure it with `style.height` / `style.width` rather than counting lines by hand.
 
 ## Key, mouse & focus input
 
@@ -171,6 +187,8 @@ new Program(model, { focus: true })
 ```
 
 Focus messages are **transitions**, not state: nothing is sent until the focus actually changes, so assume you start focused. They may also never arrive at all — Terminal.app, `screen` and the Linux console don't implement the mode, and under tmux the pane needs `set -g focus-events on`. Don't gate anything your app needs on receiving one.
+
+With `focus: true` the runtime also repaints the whole screen on every focus-in, on the theory that anything could have happened to the window while you were away.
 
 ## Components
 

@@ -56,6 +56,16 @@ function focusMsg(focused) {
   return { type: 'focus', focused }
 }
 
+// Asks the runtime to repaint the whole screen on the next frame. The renderer
+// only rewrites rows whose text changed, so anything that draws to the terminal
+// behind its back — a native library logging to the same fd, a multiplexer
+// redrawing a pane — leaves stale rows that never heal on their own. `repaint`
+// (see commands.js) is the Cmd that produces it, and program.repaint() sends it
+// from outside the loop.
+function repaintMsg() {
+  return { type: 'repaint' }
+}
+
 // The runtime tears down and exits when it sees this. `quit` (see commands.js)
 // is the Cmd that produces it.
 function quitMsg() {
@@ -68,4 +78,4 @@ function errorMsg(error) {
   return { type: 'error', error }
 }
 
-module.exports = { KeyMsg, windowSize, focusMsg, quitMsg, errorMsg }
+module.exports = { KeyMsg, windowSize, focusMsg, repaintMsg, quitMsg, errorMsg }
