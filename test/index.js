@@ -1,6 +1,8 @@
 const { test } = require('brittle')
 
 require('./tea')
+require('./renderer')
+require('./repaint')
 require('./commands')
 require('./components')
 require('./viewport')
