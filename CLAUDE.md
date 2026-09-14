@@ -96,6 +96,9 @@ can't double-drive its loop. Mirror it for your own loops.
 Other Cmd notes:
 
 - `batch(a, b)` runs Cmds concurrently; `sequence(a, b)` runs them in order.
+- `repaint` forces a full repaint. You need it only when something outside the
+  renderer has drawn to the terminal; resize, `suspend` and (with `focus: true`)
+  focus-in already repaint on their own.
 - `tick(ms, fn)` is a relative delay; `every(ms, fn)` aligns to the wall clock
   so repeated timers don't drift. Re-issue from `update` to repeat.
 - Errors thrown in a Cmd arrive as `{ type: 'error', error }` — handle them in
@@ -118,13 +121,11 @@ Concrete consequences for a larger app:
   tempting to hardcode as a line-count constant (`height - 6`, `height - 4`).
   That constant silently goes stale the moment you add a line to the header,
   the footer, or a border — and the whole view then renders **one line taller
-  than the terminal**, which makes the terminal itself scroll on the next full
-  repaint. After that scroll, every future diff-render addresses rows by an
-  absolute index that no longer matches reality: content looks like it "jumps
-  down a line" the moment anything redraws (e.g. the first keystroke), and
-  borders appear duplicated or missing. Render the header/footer first and
-  measure the real height with `style.height(box)` instead of a hand-counted
-  number:
+  than the terminal**. The renderer trims the overflow rather than let it
+  scroll the screen, so this no longer corrupts the display, but the bottom row
+  of your layout just silently vanishes (usually the footer, which is the last
+  place you'd look). Render the header/footer first and measure the real height
+  with `style.height(box)` instead of a hand-counted number:
   ```js
   _layout() {
     this.headerH = style.height(this._header())
@@ -253,5 +254,14 @@ Now a test can `require` it, construct `App`, and drive it with injected streams
 - Pausing a loop on terminal blur without re-issuing its Cmd on focus → the
   animation never comes back (or comes back twice). Bump the run id.
 - Hardcoded chrome-line count in a height formula → view renders one line
-  taller than the terminal, which scrolls and desyncs the diff renderer's row
-  addressing. Measure with `style.height(box)` instead.
+  taller than the terminal, and the renderer silently trims the bottom row off
+  your layout. Measure with `style.height(box)` instead.
+- A line built with `.slice()`/`.length` against the terminal width → it can
+  still be far wider than it looks (escapes are free, wide glyphs cost two), and
+  a `\n` smuggled in from an error message or a peer adds a whole row. Both get
+  trimmed by the renderer rather than wrapping, so the symptom is content
+  quietly going missing. Budget with `style.truncate` / `style.width`, and strip
+  newlines out of anything you render as a single line.
+- Something else wrote to the terminal (a native library logging to fd 1, a
+  spawned child) → those rows are stale and the diff renderer can't know.
+  `return [model, repaint]`, or `program.repaint()` from outside the loop.

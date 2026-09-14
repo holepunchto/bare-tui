@@ -20,7 +20,13 @@ const Renderer = require('./renderer')
 const ansi = require('./ansi')
 const mouse = require('./mouse')
 const { InputParser } = require('./input')
-const { KeyMsg, windowSize } = require('./messages')
+const { KeyMsg, windowSize, repaintMsg } = require('./messages')
+
+// A terminal that is minimised, occluded, or backed by a detached pty reports
+// a size of 0 — that means "unknown", not "zero rows". Forwarding it collapses
+// any `height - chrome` layout to nothing, and the app has no way back until the
+// next real resize, so we treat it as no report at all.
+const known = (n) => (typeof n === 'number' && n > 0 ? n : null)
 
 module.exports = class Program {
   constructor(model, opts = {}) {
@@ -99,6 +105,15 @@ module.exports = class Program {
     this.send({ type: 'quit' })
   }
 
+  // Force a full repaint on the next frame. The renderer only rewrites rows
+  // whose text changed, so it cannot know when something else has drawn over
+  // the screen — a native library logging to the same fd, say. Call this from
+  // outside the loop after such a write; from inside update(), return the
+  // `repaint` Cmd instead.
+  repaint() {
+    this.send(repaintMsg())
+  }
+
   async run() {
     this._running = true
     // try/finally guarantees the terminal is restored even if init/update/view
@@ -114,7 +129,12 @@ module.exports = class Program {
         const msg = await this._next()
         if (!msg) continue
         if (msg.type === 'quit') break
-        if (msg.type === 'resize') this.renderer.clear() // geometry changed: repaint
+        // Three ways the screen stops matching what the renderer believes:
+        // the geometry moved, the app told us it was disturbed, or the window
+        // came back after something else may have drawn over it.
+        if (msg.type === 'resize') this.renderer.resize(msg.width, msg.height)
+        else if (msg.type === 'repaint') this.renderer.clear()
+        else if (msg.type === 'focus' && msg.focused) this.renderer.clear()
 
         const [model, cmd] = this._update(msg)
         this.model = model
@@ -210,7 +230,12 @@ module.exports = class Program {
     }
 
     if (this.outputIsTTY && typeof this.output.on === 'function') {
-      this._onResize = () => this.send(windowSize(this.output.columns, this.output.rows))
+      this._onResize = () => {
+        const width = known(this.output.columns)
+        const height = known(this.output.rows)
+        if (width === null || height === null) return // not a real geometry
+        this.send(windowSize(width, height))
+      }
       this.output.on('resize', this._onResize)
     }
 
@@ -219,8 +244,9 @@ module.exports = class Program {
 
     // Seed the model with the initial geometry. Real TTYs report columns/rows;
     // injected streams won't, so fall back to opts then a sane default.
-    const width = this.output.columns ?? this.opts.width ?? 80
-    const height = this.output.rows ?? this.opts.height ?? 24
+    const width = known(this.output.columns) ?? known(this.opts.width) ?? 80
+    const height = known(this.output.rows) ?? known(this.opts.height) ?? 24
+    this.renderer.resize(width, height) // fit frames to the screen from frame one
     this.send(windowSize(width, height))
 
     // In raw mode the kernel won't deliver Ctrl+C as SIGINT (the app sees it as
@@ -340,6 +366,18 @@ module.exports = class Program {
     this._enableModes()
     this.renderer.clear() // next render repaints everything
     this._suspended = false
+
+    // The window may well have been resized while the child owned the terminal,
+    // and no SIGWINCH is coming to tell us about it — we were the ones not
+    // looking. Re-read the geometry so the repaint below is drawn to the right
+    // shape, and let the model re-lay-out if it actually moved.
+    const width = known(this.output.columns)
+    const height = known(this.output.rows)
+    if (width !== null && height !== null) {
+      const moved = width !== this.renderer.width || height !== this.renderer.height
+      this.renderer.resize(width, height)
+      if (moved) this.send(windowSize(width, height))
+    }
   }
 
   // Normalise update()'s return into a [model, cmd] pair. Accepts a bare model

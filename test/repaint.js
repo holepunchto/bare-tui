@@ -5,19 +5,17 @@
 // don't, and what a model is told when the terminal reports a degenerate size.
 //
 // Written against a downstream report of a body that cleared and never came
-// back. The findings these lock in:
+// back. What these lock in:
 //
-//   - a `resize` Msg is the ONLY thing an app can use to force a full repaint,
-//     even when the geometry hasn't actually changed. There is no repaint API,
-//     so apps forge a resize instead.
-//   - no other Msg — key, focus, custom — resyncs the screen.
-//   - focus reporting does not gate rendering in either direction: a blur
-//     causes an extra render, and a focus-in causes no repaint.
-//   - a 0-sized window report reaches the model verbatim; `??` does not guard
-//     against 0.
+//   - three Msgs resync the screen: `resize`, `repaint`, and a focus-in. An
+//     ordinary Msg does not — that is what makes the diff renderer fast.
+//   - `repaint` is reachable as a Cmd from update() and as program.repaint()
+//     from outside the loop, so an app never has to forge a resize.
+//   - rendering is never gated on focus: a blur still paints.
+//   - a 0-sized window report is dropped rather than handed to the model.
 const { test } = require('brittle')
 const { PassThrough, Writable } = require('bare-stream')
-const { Program, quit } = require('..')
+const { Program, quit, repaint } = require('..')
 const ansi = require('../ansi')
 
 function captureStream(opts = {}) {
@@ -129,12 +127,11 @@ test('repaint: no other message resyncs the screen', async (t) => {
   await done
 })
 
-test('repaint: a zero-sized window report reaches the model verbatim', async (t) => {
+test('repaint: a zero-sized window report is dropped', async (t) => {
   // Terminals and multiplexers report 0x0 transiently — minimised, occluded,
-  // a detached pty. program.js forwards output.columns/rows straight through,
-  // and the `?? opts.width ?? 80` fallback at setup does not catch 0 either,
-  // because `0 ?? x` is 0. A layout formula like `height - chrome` then goes
-  // negative and the body collapses.
+  // a detached pty. That is "unknown", not a real geometry: handing it to the
+  // model collapses any `height - chrome` layout to nothing, with no way back
+  // until the next real resize.
   const input = new PassThrough()
   const output = captureStream({ columns: 80, rows: 24 })
   const model = new HeaderBody()
@@ -149,13 +146,19 @@ test('repaint: a zero-sized window report reaches the model verbatim', async (t)
   output.emit('resize')
   await settle()
 
-  t.alike(model.sizes.at(-1), [0, 0], 'a 0x0 report is forwarded unguarded')
+  t.is(model.sizes.length, 1, 'the 0x0 report never reached the model')
+
+  output.columns = 100
+  output.rows = 30
+  output.emit('resize')
+  await settle()
+  t.alike(model.sizes.at(-1), [100, 30], 'a real size still gets through')
 
   input.write(Buffer.from('q'))
   await done
 })
 
-test('repaint: focus reporting does not gate rendering', async (t) => {
+test('repaint: a blur still paints, and focus-in resyncs the screen', async (t) => {
   const input = new PassThrough()
   const output = captureStream()
   const model = new HeaderBody()
@@ -186,7 +189,112 @@ test('repaint: focus reporting does not gate rendering', async (t) => {
   await settle()
 
   t.alike(model.focus, [false, true], 'the focus report was decoded')
-  t.is(output.text(), '', 'focus-in does NOT resync the screen — the gap to close')
+  const s = output.text()
+  t.ok(s.includes(ansi.home), 'focus-in repaints in full')
+  for (const line of BODY) t.ok(s.includes(line), 'the static body is resynced: ' + line)
+
+  input.write(Buffer.from('q'))
+  await done
+})
+
+test('repaint: the repaint Cmd resyncs the screen from update()', async (t) => {
+  const input = new PassThrough()
+  const output = captureStream()
+
+  class Model extends HeaderBody {
+    update(msg) {
+      // Stands in for an app that just spawned something which writes to the
+      // same terminal, and wants the screen back afterwards.
+      if (msg.type === 'clobbered') return [this, repaint]
+      return super.update(msg)
+    }
+  }
+
+  const program = new Program(new Model(), {
+    input,
+    output,
+    isTTY: true,
+    width: 80,
+    height: 24,
+    fps: 0
+  })
+  const done = program.run()
+  await settle()
+  output.reset()
+
+  program.send({ type: 'clobbered' })
+  await settle()
+
+  const s = output.text()
+  t.ok(s.includes(ansi.home), 'the repaint Cmd forced a full repaint')
+  for (const line of BODY) t.ok(s.includes(line), 'body line resynced: ' + line)
+
+  input.write(Buffer.from('q'))
+  await done
+})
+
+test('repaint: program.repaint() resyncs from outside the loop', async (t) => {
+  const input = new PassThrough()
+  const output = captureStream()
+  const program = new Program(new HeaderBody(), {
+    input,
+    output,
+    isTTY: true,
+    width: 80,
+    height: 24,
+    fps: 0
+  })
+  const done = program.run()
+  await settle()
+  output.reset()
+
+  program.repaint()
+  await settle()
+
+  const s = output.text()
+  t.ok(s.includes(ansi.home), 'program.repaint() forced a full repaint')
+  for (const line of BODY) t.ok(s.includes(line), 'body line resynced: ' + line)
+
+  input.write(Buffer.from('q'))
+  await done
+})
+
+test('repaint: a resize that happened during a suspend is picked up on resume', async (t) => {
+  // While a child process owned the terminal we were not listening for
+  // SIGWINCH, and none is coming to tell us afterwards — so the geometry has to
+  // be re-read on the way back in, or the repaint is drawn to the wrong shape.
+  const input = new PassThrough()
+  const output = captureStream({ columns: 80, rows: 24 })
+
+  class Model extends HeaderBody {
+    update(msg) {
+      if (msg.type === 'edit') {
+        return [
+          this,
+          {
+            __suspend: () => {
+              output.columns = 100 // the user resized while the editor was up
+              output.rows = 30
+              return Promise.resolve({ type: 'edited' })
+            }
+          }
+        ]
+      }
+      return super.update(msg)
+    }
+  }
+
+  const m = new Model()
+  const program = new Program(m, { input, output, isTTY: true, fps: 0 })
+  const done = program.run()
+  await settle()
+  t.alike(m.sizes.at(-1), [80, 24], 'started at the real size')
+
+  program.send({ type: 'edit' })
+  await settle()
+
+  t.alike(m.sizes.at(-1), [100, 30], 'the model was told about the resize it missed')
+  t.is(program.renderer.height, 30, 'and the renderer fits frames to the new screen')
 
   input.write(Buffer.from('q'))
   await done
