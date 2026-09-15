@@ -8,6 +8,7 @@ const {
   position,
   joinHorizontal,
   joinVertical,
+  overlay,
   width,
   height,
   truncate,
@@ -28,6 +29,7 @@ test('style: layout helpers are attached to the factory (public API)', (t) => {
   t.is(style.truncate, truncate, 'style.truncate is exposed')
   t.is(style.joinHorizontal, joinHorizontal, 'style.joinHorizontal is exposed')
   t.is(style.joinVertical, joinVertical, 'style.joinVertical is exposed')
+  t.is(style.overlay, overlay, 'style.overlay is exposed')
   t.is(style.borders, borders, 'style.borders is exposed')
   t.is(style.position, position, 'style.position is exposed')
 })
@@ -134,4 +136,26 @@ test('style: borders/joins stay aligned through styled component-like text', (t)
   const out = style().border(borders.normal).render(row)
   t.ok(rectangular(out), 'box around styled content is rectangular')
   t.is(width(out), 5, 'content(3) + 2 border columns')
+})
+
+test('overlay: paints a block over a base, cutting the rows underneath', (t) => {
+  const red = (s) => style().foreground('red').render(s)
+  const base = ['abcdefghij', red('abcdefghij'), '世界世界世', 'short'].join('\n')
+  const rows = overlay(base, 'XX\nYY', 3, 1).split('\n')
+  t.is(stripAnsi(rows[0]), 'abcdefghij', 'rows outside the block are untouched')
+  t.is(stripAnsi(rows[1]), 'abcXXfghij', 'cut at the block’s edges')
+  t.ok(rows[1].startsWith('\x1b[31mabc\x1b[0m'), 'the left piece keeps its colour and closes it')
+  t.ok(rows[1].includes('XX\x1b[31mfghij'), 'the right piece reopens it')
+  t.is(stripAnsi(rows[2]), '世 YY 界世', 'a wide glyph split by an edge becomes a space')
+  t.is(width(rows[2]), 10, 'so the row keeps its width')
+  t.is(stripAnsi(rows[3]), 'short', 'rows past the block are untouched')
+
+  const centred = overlay('..........\n..........\n..........', 'XX')
+  t.is(stripAnsi(centred).split('\n')[1], '....XX....', 'centred when not placed')
+  t.is(
+    stripAnsi(overlay('ab\ncd', 'XX', 5, 0)).split('\n')[0],
+    'ab   XX',
+    'a short row pads up to the block'
+  )
+  t.is(stripAnsi(overlay('ab', 'XX\nYY', 0, 0)), 'XX', 'rows the base does not have are dropped')
 })

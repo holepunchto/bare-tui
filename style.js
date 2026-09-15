@@ -445,6 +445,71 @@ function joinVertical(pos, ...blocks) {
   return out.join('\n')
 }
 
+// ── overlay ────────────────────────────────────────────────────────────────
+
+// Paint `block` on `base` with its top-left at column x, row y — centred when
+// not given. Each row underneath is cut at the block's edges, cell by cell,
+// keeping the styling in force on either side; rows the block does not
+// reach are untouched. This is how a dialog floats over a screen without
+// the screen having to know.
+function overlay(base, block, x, y) {
+  const rows = String(base).split('\n')
+  const patch = String(block).split('\n')
+  const w = width(block)
+  if (x === undefined) x = Math.max(0, Math.floor((width(base) - w) / 2))
+  if (y === undefined) y = Math.max(0, Math.floor((rows.length - patch.length) / 2))
+
+  patch.forEach((line, i) => {
+    const row = rows[y + i]
+    if (row === undefined) return
+    const left = cut(row, 0, x)
+    rows[y + i] = padLine(left, x) + padLine(line, w) + cut(row, x + w, Infinity)
+  })
+  return rows.join('\n')
+}
+
+// The cells [from, to) of a styled line. Escapes before the cut are folded
+// into the styling that opens the piece; a wide glyph on either edge becomes
+// a space rather than half a character.
+function cut(line, from, to) {
+  let out = ''
+  let active = ''
+  let col = 0
+  let entered = false
+  const enter = () => {
+    if (!entered) out += active
+    entered = true
+  }
+
+  for (let i = 0; i < line.length;) {
+    ANSI_STICKY.lastIndex = i
+    const esc = ANSI_STICKY.exec(line)
+    if (esc) {
+      if (col >= from && col < to) {
+        enter()
+        out += esc[0]
+      } else if (col < from) {
+        active = esc[0] === RESET || esc[0] === CSI + 'm' ? '' : active + esc[0]
+      }
+      i += esc[0].length
+      continue
+    }
+
+    const cp = line.codePointAt(i)
+    const ch = String.fromCodePoint(cp)
+    const cw = charWidth(cp)
+    if (col >= to) break
+    if (col + cw > from) {
+      enter()
+      out += col >= from && col + cw <= to ? ch : ' '
+    }
+    col += cw
+    i += ch.length
+  }
+
+  return out.includes('\x1b') ? out + RESET : out
+}
+
 // The public entry point is the `style` factory, with helpers attached.
 function style() {
   return new Style()
@@ -454,6 +519,7 @@ style.borders = borders
 style.position = position
 style.joinHorizontal = joinHorizontal
 style.joinVertical = joinVertical
+style.overlay = overlay
 style.width = width
 style.height = height
 style.truncate = truncate
@@ -466,6 +532,7 @@ module.exports = {
   position,
   joinHorizontal,
   joinVertical,
+  overlay,
   width,
   height,
   truncate,
