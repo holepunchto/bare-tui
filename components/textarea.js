@@ -9,6 +9,7 @@
 //
 //   const ta = textarea.create({ width: 60, height: 10, placeholder: '…' }).focus()
 const ansi = require('../ansi')
+const chars = require('./chars')
 
 const dim = (s) => ansi.modifierDim + s + ansi.modifierReset
 const reverse = (s) => ansi.modifierReverse + s + ansi.modifierNotReverse
@@ -95,7 +96,7 @@ class TextArea {
   }
 
   _left() {
-    if (this.col > 0) this.col--
+    if (this.col > 0) this.col = chars.before(this._line(), this.col)
     else if (this.row > 0) {
       this.row--
       this.col = this._line().length
@@ -103,7 +104,7 @@ class TextArea {
   }
 
   _right() {
-    if (this.col < this._line().length) this.col++
+    if (this.col < this._line().length) this.col = chars.after(this._line(), this.col)
     else if (this.row < this.lines.length - 1) {
       this.row++
       this.col = 0
@@ -131,8 +132,9 @@ class TextArea {
   _backspace() {
     const line = this._line()
     if (this.col > 0) {
-      this.lines[this.row] = line.slice(0, this.col - 1) + line.slice(this.col)
-      this.col--
+      const from = chars.before(line, this.col)
+      this.lines[this.row] = line.slice(0, from) + line.slice(this.col)
+      this.col = from
     } else if (this.row > 0) {
       const prev = this.lines[this.row - 1]
       this.col = prev.length
@@ -145,7 +147,7 @@ class TextArea {
   _delete() {
     const line = this._line()
     if (this.col < line.length) {
-      this.lines[this.row] = line.slice(0, this.col) + line.slice(this.col + 1)
+      this.lines[this.row] = line.slice(0, this.col) + line.slice(chars.after(line, this.col))
     } else if (this.row < this.lines.length - 1) {
       this.lines[this.row] = line + this.lines[this.row + 1]
       this.lines.splice(this.row + 1, 1)
@@ -153,20 +155,13 @@ class TextArea {
   }
 
   _insert(msg) {
-    const ch = msg.sequence
-    const printable =
-      !msg.ctrl &&
-      !msg.meta &&
-      typeof ch === 'string' &&
-      ch.length === 1 &&
-      ch >= ' ' &&
-      ch !== '\x7f'
-    if (!printable) return
+    if (!chars.printable(msg)) return
     if (this.charLimit && this.length >= this.charLimit) return
 
+    const ch = msg.sequence
     const line = this._line()
     this.lines[this.row] = line.slice(0, this.col) + ch + line.slice(this.col)
-    this.col++
+    this.col += ch.length
   }
 
   _vertical(delta) {

@@ -19,6 +19,7 @@
 // Because the Program hides the real terminal cursor, the field draws its own
 // as a reverse-video cell.
 const ansi = require('../ansi')
+const chars = require('./chars')
 
 const dim = (s) => ansi.modifierDim + s + ansi.modifierReset
 const reverse = (s) => ansi.modifierReverse + s + ansi.modifierNotReverse
@@ -64,22 +65,20 @@ class TextInput {
     if (!this.focused || !msg || msg.type !== 'key') return [this, null]
 
     if (msg.is('left', 'ctrl+b')) {
-      this.cursor = Math.max(0, this.cursor - 1)
+      this.cursor = chars.before(this.value, this.cursor)
     } else if (msg.is('right', 'ctrl+f')) {
-      this.cursor = Math.min(this.value.length, this.cursor + 1)
+      this.cursor = chars.after(this.value, this.cursor)
     } else if (msg.is('home', 'ctrl+a')) {
       this.cursor = 0
     } else if (msg.is('end', 'ctrl+e')) {
       this.cursor = this.value.length
     } else if (msg.is('backspace')) {
-      if (this.cursor > 0) {
-        this.value = this.value.slice(0, this.cursor - 1) + this.value.slice(this.cursor)
-        this.cursor--
-      }
+      const from = chars.before(this.value, this.cursor)
+      this.value = this.value.slice(0, from) + this.value.slice(this.cursor)
+      this.cursor = from
     } else if (msg.is('delete')) {
-      if (this.cursor < this.value.length) {
-        this.value = this.value.slice(0, this.cursor) + this.value.slice(this.cursor + 1)
-      }
+      const to = chars.after(this.value, this.cursor)
+      this.value = this.value.slice(0, this.cursor) + this.value.slice(to)
     } else {
       this._insert(msg)
     }
@@ -87,23 +86,17 @@ class TextInput {
     return [this, null]
   }
 
-  // Insert a single printable character at the cursor. We key off the decoded
-  // sequence (not name) so case and punctuation come through verbatim, and skip
-  // control bytes, chorded keys, and DEL.
+  // Insert a printable key at the cursor. We key off the decoded sequence (not
+  // name) so case and punctuation come through verbatim, and skip control
+  // bytes, chorded keys, and DEL. The sequence may be more than one code unit:
+  // an emoji is a surrogate pair, and some come with a variation selector.
   _insert(msg) {
-    const ch = msg.sequence
-    const printable =
-      !msg.ctrl &&
-      !msg.meta &&
-      typeof ch === 'string' &&
-      ch.length === 1 &&
-      ch >= ' ' &&
-      ch !== '\x7f'
-    if (!printable) return
-    if (this.charLimit && this.value.length >= this.charLimit) return
+    if (!chars.printable(msg)) return
+    if (this.charLimit && chars.count(this.value) >= this.charLimit) return
 
+    const ch = msg.sequence
     this.value = this.value.slice(0, this.cursor) + ch + this.value.slice(this.cursor)
-    this.cursor++
+    this.cursor += ch.length
   }
 
   _display() {
@@ -123,8 +116,9 @@ class TextInput {
     if (!this.focused) return this.prompt + text
 
     // Draw the cursor as a reverse cell; a trailing space when at end-of-line.
-    const at = text.slice(this.cursor, this.cursor + 1) || ' '
-    return this.prompt + text.slice(0, this.cursor) + reverse(at) + text.slice(this.cursor + 1)
+    const end = chars.after(text, this.cursor)
+    const at = text.slice(this.cursor, end) || ' '
+    return this.prompt + text.slice(0, this.cursor) + reverse(at) + text.slice(end)
   }
 }
 

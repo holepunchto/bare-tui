@@ -3,6 +3,7 @@
 const { test } = require('brittle')
 const { PassThrough, Writable } = require('bare-stream')
 const { Program, quit, spinner, textinput, KeyMsg } = require('..')
+const { stripAnsi } = require('../style')
 
 // Craft KeyMsgs the way the decoder would. `typed` is a printable character;
 // `named` is a control key (sequence length > 1 so it's never inserted).
@@ -45,6 +46,26 @@ test('textinput: typing, cursor movement, and editing', (t) => {
   t.is(input.cursor, 0, 'home jumps to start')
   input.update(named('end'))
   t.is(input.cursor, 1, 'end jumps to end')
+})
+
+test('textinput: emoji are one character to type, step over and delete', (t) => {
+  const input = textinput.create().focus()
+  for (const ch of ['a', '👍', '❤️', 'b']) input.update(typed(ch))
+  t.is(input.value, 'a👍❤️b', 'astral and multi-code-point characters inserted whole')
+
+  for (let i = 0; i < 3; i++) input.update(named('left')) // b, the selector, the heart
+  t.is(input.value.slice(input.cursor), '❤️b', 'left steps over a surrogate pair')
+  input.update(named('backspace'))
+  t.is(input.value, 'a❤️b', 'backspace removes the whole pair')
+  input.update(named('delete'))
+  t.is(input.value, 'a\ufe0fb', 'delete removes one code point of a cluster')
+
+  const limited = textinput.create({ charLimit: 2 }).focus()
+  for (const ch of ['👍', '👍', '👍']) limited.update(typed(ch))
+  t.is(limited.value, '👍👍', 'charLimit counts characters, not code units')
+
+  const view = stripAnsi(textinput.create({ value: '👍', focused: true }).view())
+  t.is(view, '👍 ', 'cursor cell after a pair, not inside it')
 })
 
 test('textinput: charLimit and password masking', (t) => {

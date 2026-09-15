@@ -20,6 +20,20 @@ test('textarea: ignores keys while blurred', (t) => {
   t.is(ta.value, '', 'blurred textarea ignores input')
 })
 
+test('textarea: emoji are one character to type, step over and delete', (t) => {
+  const ta = textarea.create().focus()
+  for (const c of ['a', '👍', 'b']) ta.update(typed(c))
+  t.is(ta.value, 'a👍b')
+  ta.update(named('left'))
+  ta.update(named('left'))
+  t.is(ta.col, 1, 'left steps over the pair')
+  ta.update(named('delete'))
+  t.is(ta.value, 'ab', 'delete removes the whole pair')
+  ta.update(typed('👍'))
+  ta.update(named('backspace'))
+  t.is(ta.value, 'ab', 'backspace removes the whole pair')
+})
+
 test('textarea: type, split on enter, value', (t) => {
   const ta = textarea.create().focus()
   for (const c of 'ab') ta.update(typed(c))
