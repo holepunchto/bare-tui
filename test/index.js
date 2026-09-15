@@ -23,6 +23,7 @@ require('./checkbox')
 require('./radio')
 require('./select')
 require('./focus')
+require('./dialog')
 
 test('works', (t) => {
   t.pass()

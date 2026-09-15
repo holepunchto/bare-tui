@@ -41,6 +41,7 @@ const checkbox = require('./components/checkbox')
 const radio = require('./components/radio')
 const select = require('./components/select')
 const focus = require('./components/focus')
+const dialog = require('./components/dialog')
 
 module.exports = {
   Program,
@@ -48,7 +49,7 @@ module.exports = {
   KeyMsg: messages.KeyMsg,
   key, // key.matches(msg, ...chords | bindings), key.binding({ keys, help })
   ansi,
-  style, // style().bold().border(style.borders.rounded).render(...) + style.joinHorizontal/Vertical
+  style, // style().bold().border(style.borders.rounded).render(...) + style.joinHorizontal/Vertical/overlay
 
   // Components — each a composable { init?, update, view } model.
   spinner, // spinner.create({ frames, fps })
@@ -67,5 +68,6 @@ module.exports = {
   checkbox, // checkbox.create({ label, checked }) — boolean toggle (space)
   radio, // radio.create({ options, selected }) — single choice; value()
   select, // select.create({ options, placeholder }) — dropdown; view() + menuView()
-  focus // focus.create({ items }) — ordered focus ring across child components
+  focus, // focus.create({ items }) — ordered focus ring across child components
+  dialog // dialog.create({ title, hint, width }) — box painted over the screen; overlay(screen, content)
 }

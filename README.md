@@ -213,6 +213,7 @@ Ready-made, composable pieces — each is a model (`update`/`view`) you embed in
 | [stopwatch](docs/stopwatch.md)       | Counts elapsed time up                  |
 | [timer](docs/timer.md)               | Counts a duration down                  |
 | [filepicker](docs/filepicker.md)     | Browse the filesystem and pick a file   |
+| [dialog](docs/dialog.md)             | Bordered box painted over the screen    |
 
 To embed one, hold it as a field, route messages to it, and thread its command back up:
 
@@ -245,6 +246,10 @@ style()
 // Layout: place blocks side by side or stacked.
 style.joinHorizontal(style.position.top, left, '  ', right)
 style.joinVertical(style.position.left, header, body, footer)
+
+// Paint one block over another, centred (or at column x, row y): the rows
+// underneath are cut at the block's edges with their styling kept.
+style.overlay(screen, box)
 ```
 
 Set `.width(n)` to pin a block to a fixed width (short/blank lines pad out, so a bordered box tracks the screen edge instead of shrinking to its content).
