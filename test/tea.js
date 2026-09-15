@@ -7,7 +7,7 @@
 // restore.
 const { test } = require('brittle')
 const { PassThrough, Writable } = require('bare-stream')
-const { Program, quit } = require('..')
+const { Program, quit, KeyMsg } = require('..')
 
 function captureStream() {
   const chunks = []
@@ -259,4 +259,24 @@ test('tea: renders coalesce — many Msgs collapse into few frames', async (t) =
 
   t.ok(renders <= 3, `20 updates coalesced into ${renders} frames`)
   t.ok(output.text().includes('n=20'), 'final state still rendered')
+})
+
+test('KeyMsg.is compares the whole chord', (t) => {
+  const key = (name, mods = {}) =>
+    new KeyMsg({ name, sequence: '', ctrl: false, meta: false, shift: false, ...mods })
+
+  t.ok(key('up').is('up'))
+  t.ok(key('up', { ctrl: true }).is('ctrl+up'))
+  t.absent(key('up', { ctrl: true }).is('up'), 'a modifier makes a different chord')
+  t.absent(key('up', { shift: true }).is('up'))
+  t.absent(key('up').is('ctrl+up'))
+
+  t.ok(key('escape').is('esc'), 'esc is an alias of escape')
+  t.ok(key('escape').is('escape'))
+  t.ok(key('return').is('enter'), 'enter is an alias of return')
+  t.ok(key('return').is('return'))
+  t.ok(key('escape', { ctrl: true }).is('ctrl+esc'), 'aliases apply inside a chord')
+
+  t.ok(key('c', { ctrl: true }).is('q', 'ctrl+c'), 'any of several chords')
+  t.absent(key('c', { ctrl: true }).is('c'), 'ctrl+c is not c')
 })
