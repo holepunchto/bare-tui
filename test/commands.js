@@ -128,3 +128,25 @@ test('key matcher: is() and key.matches()', (t) => {
   t.absent(key.matches({ type: 'resize' }, 'q'), 'non-key Msg never matches')
   t.absent(key.matches(null, 'q'), 'null Msg is safe')
 })
+
+test('KeyMsg: a lone escape is esc, not alt+escape', (t) => {
+  // bare-ansi-escapes emits the escape key from its timeout with meta set,
+  // the flag it uses for ESC-prefixed keys; the sequence tells them apart.
+  const lone = new KeyMsg({
+    name: 'escape',
+    sequence: '\x1b',
+    ctrl: false,
+    meta: true,
+    shift: false
+  })
+  t.is(String(lone), 'escape')
+  t.ok(key.matches(lone, 'esc'), 'matches esc')
+  const real = new KeyMsg({
+    name: 'escape',
+    sequence: '\x1b\x1b',
+    ctrl: false,
+    meta: true,
+    shift: false
+  })
+  t.is(String(real), 'alt+escape', 'two escape bytes are alt+escape')
+})

@@ -14,7 +14,10 @@ class KeyMsg {
     this.name = key.name
     this.sequence = key.sequence
     this.ctrl = key.ctrl
-    this.meta = key.meta
+    // The decoder reports a lone escape — the one that arrives by itself and
+    // times out — with the meta flag it uses for ESC-prefixed keys, which
+    // would spell it alt+escape. A real alt+escape is two escape bytes.
+    this.meta = key.meta && !(key.name === 'escape' && key.sequence === '\x1b')
     this.shift = key.shift
   }
 
