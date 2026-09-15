@@ -158,7 +158,7 @@ You should not need it for your own output: the renderer knows the screen size a
 
 ## Key, mouse & focus input
 
-Keys arrive as `{ type: 'key' }` messages (a `KeyMsg`). Match them with `key.matches`, which is null- and type-safe:
+Keys arrive as `{ type: 'key' }` messages (a `KeyMsg`). Match them with `key.matches`, which is null- and type-safe. A chord is compared whole — `'up'` does not match `ctrl+up` — and `esc`/`escape`, `enter`/`return` are aliases:
 
 ```js
 if (key.matches(msg, 'enter')) ...

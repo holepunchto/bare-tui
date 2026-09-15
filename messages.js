@@ -28,18 +28,26 @@ class KeyMsg {
     return parts.join('+')
   }
 
-  // True if this key matches any of the given chords. A chord is matched
-  // against both the full string form ("ctrl+c", "enter") and the bare name
-  // ("c", "return"), so 'enter'/'return' and 'esc'/'escape' both work.
+  // True if this key matches any of the given chords. A chord is compared
+  // whole, so 'up' means up and not ctrl+up or shift+up; 'esc'/'escape' and
+  // 'enter'/'return' are aliases.
   //   if (msg.is('q', 'ctrl+c')) ...
   is(...chords) {
     const str = this.toString()
-    for (let chord of chords) {
-      if (chord === 'esc') chord = 'escape'
-      if (chord === str || chord === this.name) return true
+    for (const chord of chords) {
+      if (alias(chord) === str) return true
     }
     return false
   }
+}
+
+// The names a key goes by: the decoder says 'escape' and 'return', chords
+// usually say 'esc' and 'enter'. Only the final segment is a key name.
+function alias(chord) {
+  return String(chord).replace(
+    /(^|\+)(esc|return)$/,
+    (m, sep, name) => sep + (name === 'esc' ? 'escape' : 'enter')
+  )
 }
 
 // Emitted on startup and whenever the terminal is resized.
