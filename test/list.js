@@ -12,6 +12,9 @@ const named = (name) =>
     meta: false,
     shift: false
   })
+// As the decoder reports a lone Esc: meta set, a single ESC byte.
+const esc = () =>
+  new KeyMsg({ name: 'escape', sequence: '\x1b', ctrl: false, meta: true, shift: false })
 
 test('list: selection moves and clamps', (t) => {
   const l = list.create({ items: ['a', 'b', 'c'], height: 5 })
@@ -56,7 +59,7 @@ test('list: filtering narrows items and manages selection', (t) => {
   t.is(l.filter, 'ap', 'accepted filter is retained')
   t.is(l.visibleCount, 2, 'still filtered after accept')
 
-  l.update(named('escape'))
+  l.update(esc())
   t.is(l.filter, '', 'esc clears the active filter')
   t.is(l.visibleCount, 4, 'all items visible again')
 })
@@ -68,7 +71,7 @@ test('list: esc while filtering cancels back to full list', (t) => {
   l.update(typed('b'))
   t.is(l.visibleCount, 1, 'filtered down')
 
-  l.update(named('escape'))
+  l.update(esc())
   t.absent(l.filtering, 'esc leaves filter mode')
   t.is(l.visibleCount, 2, 'and restores the full list')
 })

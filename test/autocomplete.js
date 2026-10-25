@@ -17,7 +17,8 @@ const SPECIAL = {
   tab: key({ name: 'tab', sequence: '\t' }),
   down: key({ name: 'down' }),
   up: key({ name: 'up' }),
-  esc: key({ name: 'escape', sequence: '\x1b' }),
+  // As the decoder reports a lone Esc: meta set, a single ESC byte.
+  esc: key({ name: 'escape', sequence: '\x1b', meta: true }),
   enter: key({ name: 'return', sequence: '\r' }),
   back: key({ name: 'backspace', sequence: '\x7f' })
 }
