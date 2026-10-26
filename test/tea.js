@@ -277,6 +277,21 @@ test('KeyMsg.is compares the whole chord', (t) => {
   t.ok(key('return').is('return'))
   t.ok(key('escape', { ctrl: true }).is('ctrl+esc'), 'aliases apply inside a chord')
 
+  // The decoder reports a lone Esc as meta; only \x1b\x1b is alt+escape.
+  const lone = key('escape', { sequence: '\x1b', meta: true })
+  t.is(lone.toString(), 'escape', 'a lone esc is not alt+escape')
+  t.ok(lone.is('esc'))
+  t.absent(lone.is('alt+esc'))
+  t.ok(key('escape', { sequence: '\x1b\x1b', meta: true }).is('alt+esc'), 'esc esc is alt+escape')
+
+  // The decoder reports Shift+G as name 'g' with shift set.
+  const G = key('g', { sequence: 'G', shift: true })
+  t.is(G.toString(), 'G', 'a shifted letter is its capital')
+  t.ok(G.is('G'))
+  t.absent(G.is('g'), 'G is not g')
+  t.absent(key('g', { sequence: 'g' }).is('G'), 'g is not G')
+  t.ok(key('g', { sequence: '\x1bG', meta: true, shift: true }).is('alt+G'))
+
   t.ok(key('c', { ctrl: true }).is('q', 'ctrl+c'), 'any of several chords')
   t.absent(key('c', { ctrl: true }).is('c'), 'ctrl+c is not c')
 })

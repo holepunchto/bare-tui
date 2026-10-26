@@ -21,10 +21,15 @@ class KeyMsg {
   toString() {
     const parts = []
     if (this.ctrl) parts.push('ctrl')
-    if (this.meta) parts.push('alt')
-    // Only surface shift for named keys; letters already arrive upper/lower.
+    // The decoder flags a lone Esc (a bare \x1b) as meta, since that byte is
+    // also the alt prefix. Alt+Esc proper arrives as \x1b\x1b, so only treat
+    // escape as alt when there's a second ESC in front of it.
+    if (this.meta && !(this.name === 'escape' && this.sequence === '\x1b')) parts.push('alt')
+    // Only surface shift for named keys. The decoder lowercases a letter and
+    // flags shift instead, so a shifted letter renders as its capital ('G').
     if (this.shift && this.name && this.name.length > 1) parts.push('shift')
-    parts.push(this.name === 'return' ? 'enter' : this.name)
+    if (this.shift && /^[a-z]$/.test(this.name)) parts.push(this.name.toUpperCase())
+    else parts.push(this.name === 'return' ? 'enter' : this.name)
     return parts.join('+')
   }
 

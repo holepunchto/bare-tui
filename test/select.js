@@ -12,6 +12,8 @@ const k = (name, opts = {}) =>
     shift: !!opts.shift
   })
 
+// As the decoder reports a lone Esc: meta set, a single ESC byte.
+const esc = () => k('escape', { sequence: '\x1b', meta: true })
 const space = () => k('space', { sequence: ' ' })
 
 test('select: closed-state key contract', (t) => {
@@ -40,7 +42,7 @@ test('select: menu navigation, commit and cancel', (t) => {
 
   s.update(space()) // reopen
   s.update(k('up'))
-  s.update(k('escape'))
+  s.update(esc())
   t.absent(s.open, 'esc closes')
   t.is(s.value(), 'c', 'esc leaves the previous choice intact')
 })
